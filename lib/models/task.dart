@@ -4,7 +4,7 @@ class Task {
     required this.isImportant,
     required this.title,
     required this.isCompleted,
-    required this.time,
+    required this.date,
     required this.repeat,
   });
 
@@ -12,7 +12,7 @@ class Task {
   bool isImportant;
   String title;
   bool isCompleted;
-  DateTime time;
+  DateTime date;
   String repeat;
 
   void toggleCompleted() {
@@ -25,7 +25,7 @@ class Task {
       'isImportant': isImportant,
       'title': title,
       'isCompleted': isCompleted,
-      'time': time.toIso8601String(),
+      'time': date.toIso8601String(),
       'repeat': repeat,
     };
   }
@@ -36,7 +36,7 @@ class Task {
       isImportant: json['isImportant'] as bool,
       title: json['title'] as String,
       isCompleted: json['isCompleted'] as bool,
-      time: DateTime.parse(json['time'] as String),
+      date: DateTime.parse(json['time'] as String),
       repeat: json['repeat'] as String,
     );
   }
@@ -47,7 +47,7 @@ class Task {
       'isImportant': isImportant ? 1 : 0,
       'title': title,
       'isCompleted': isCompleted ? 1 : 0,
-      'time': time.toIso8601String(),
+      'time': date.toIso8601String(),
       'repeat': repeat,
     };
   }
@@ -58,7 +58,7 @@ class Task {
       isImportant: map['isImportant'] == 1,
       title: map['title'] as String,
       isCompleted: map['isCompleted'] == 1,
-      time: DateTime.parse(map['time'] as String),
+      date: DateTime.parse(map['time'] as String),
       repeat: map['repeat'] as String,
     );
   }
