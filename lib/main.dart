@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/pages/todo_page.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:provider/provider.dart';
@@ -16,36 +15,55 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (context) => TodoProvider()..loadTasks(),
-      child: const MyApp(),
+      child: MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.system; // 默认跟随系统
+
+  void toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '待办事项与计时器',
-      themeMode: ThemeMode.light,
+      themeMode: _themeMode,
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
+        brightness: Brightness.light, // 明确指定浅色主题
+        colorSchemeSeed: Colors.lightBlue,
         fontFamily: 'NotoSansSC', // Set Chinese font
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.dark, // 明确指定深色主题
         colorSchemeSeed: Colors.blue,
         fontFamily: 'NotoSansSC', // Set Chinese font
       ),
-      home: const MyHomePage(),
+      home: MyHomePage(toggleTheme: toggleTheme),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final VoidCallback toggleTheme;
+
+  const MyHomePage({super.key, required this.toggleTheme});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -57,10 +75,13 @@ class _MyHomePageState extends State<MyHomePage> {
   bool showLeading = false;
   // groupAlignment 控制 NavigationRail 的分组对齐方式，-1.0 表示顶部对齐
   double groupAlignment = -1.0;
-  ThemeMode _themeMode = ThemeMode.light;
 
   @override
   Widget build(BuildContext context) {
+    final currentThemeMode = Theme.of(context).brightness == Brightness.dark
+        ? ThemeMode.dark
+        : ThemeMode.light;
+
     return Consumer<TodoProvider>(
       builder: (context, todoProvider, child) {
         return Scaffold(
@@ -92,36 +113,18 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   },
                   labelType: labelType,
-                  leading: Column(
-                    children: [
-                      showLeading
-                          ? FloatingActionButton(
-                              onPressed: () {
-                                // TODO：添加FAB逻辑
-                              },
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
-                              child: const Icon(Icons.add),
-                            )
-                          : const SizedBox(),
-                    ],
-                  ),
                   trailing: IconButton(
                     tooltip: '切换深色模式',
                     icon: Icon(
-                      _themeMode == ThemeMode.dark
+                      currentThemeMode == ThemeMode.dark
                           ? Icons.light_mode
                           : Icons.dark_mode,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _themeMode = _themeMode == ThemeMode.dark
-                            ? ThemeMode.light
-                            : ThemeMode.dark;
-                      });
-                    },
+                    onPressed: widget.toggleTheme,
                   ),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHigh,
                 ),
                 Expanded(
                   child: Padding(
@@ -148,7 +151,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 context: context,
                 isScrollControlled: true,
                 builder: (BuildContext context) {
-                  return TaskForm(context: context, todoProvider: todoProvider, initialTask: null);
+                  return TaskForm(
+                    context: context,
+                    todoProvider: todoProvider,
+                    initialTask: null,
+                  );
                 },
               );
             },
