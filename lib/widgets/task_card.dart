@@ -5,6 +5,7 @@ import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/widgets/pomodoro_timer_picker.dart';
 import 'package:todo_list_and_clock/widgets/pomodoro_timer.dart';
 import 'package:todo_list_and_clock/providers/todo_provider.dart';
+import 'package:todo_list_and_clock/enums/repeat_type.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({super.key, required this.task});
@@ -112,7 +113,7 @@ class TaskCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${task.date.toString().padLeft(2, '0')}:${task.date.minute.toString().padLeft(2, '0')} - Repeat: ${task.repeat}',
+                        '${task.date.toString()} - 重复周期: ${task.repeat.displayName}',
                         style:
                             ScreenDisplay.getTextTheme(
                               GeneralTextStyle.label,
@@ -156,7 +157,7 @@ class TaskCard extends StatelessWidget {
 }
 
 // 任务表单组件，用于添加和编辑任务
-class TaskForm extends StatelessWidget {
+class TaskForm extends StatefulWidget {
   const TaskForm({
     super.key,
     required this.context,
@@ -169,15 +170,44 @@ class TaskForm extends StatelessWidget {
   final Task? initialTask; // 可选的任务对象，如果为空则是添加新任务
 
   @override
-  Widget build(BuildContext context) {
-    final titleController = TextEditingController(
-      text: initialTask?.title ?? '',
-    );
-    final repeatController = TextEditingController(
-      text: initialTask?.repeat ?? '',
-    );
-    DateTime? selectedDueDate = initialTask?.date;
+  State<TaskForm> createState() => _TaskFormState();
+}
 
+class _TaskFormState extends State<TaskForm> {
+  late TextEditingController _titleController;
+  late DateTime? _selectedDueDate;
+  late RepeatType _selectedRepeatType;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.initialTask?.title ?? '');
+    _selectedDueDate = widget.initialTask?.date;
+    _selectedRepeatType = widget.initialTask?.repeat ?? RepeatType.none;
+    
+    // 如果是编辑模式且设置了重复周期但没有设置截止日期，根据重复周期计算截止日期
+    if (widget.initialTask != null && _selectedRepeatType != RepeatType.none && _selectedDueDate == null) {
+      _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  void _updateDueDateBasedOnRepeat() {
+    if (_selectedRepeatType != RepeatType.none) {
+      // 当选择了重复周期时，自动设置截止日期为当前日期加上相应的周期
+      setState(() {
+        _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -189,66 +219,83 @@ class TaskForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            controller: titleController,
+            controller: _titleController,
             decoration: const InputDecoration(labelText: '任务标题'),
             autofocus: true,
           ),
-          TextField(
-            controller: repeatController,
-            decoration: const InputDecoration(labelText: '重复周期'),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: DropdownButtonFormField<RepeatType>(
+              value: _selectedRepeatType,
+              decoration: const InputDecoration(labelText: '重复周期'),
+              items: RepeatType.values.map((RepeatType repeatType) {
+                return DropdownMenuItem<RepeatType>(
+                  value: repeatType,
+                  child: Text(repeatType.displayName),
+                );
+              }).toList(),
+              onChanged: (RepeatType? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedRepeatType = newValue;
+                    _updateDueDateBasedOnRepeat();
+                  });
+                }
+              },
+            ),
           ),
           ListTile(
             title: Text(
-              selectedDueDate != null
-                  ? '已选择: ${selectedDueDate.year}-${selectedDueDate.month.toString().padLeft(2, '0')}-${selectedDueDate.day.toString().padLeft(2, '0')}'
+              _selectedDueDate != null
+                  ? '已选择: ${_selectedDueDate!.year}-${_selectedDueDate!.month.toString().padLeft(2, '0')}-${_selectedDueDate!.day.toString().padLeft(2, '0')}'
                   : '选择截止日期',
             ),
             onTap: () async {
               final DateTime? date = await showDatePicker(
                 context: context,
-                initialDate: selectedDueDate ?? DateTime.now(),
+                initialDate: _selectedDueDate ?? DateTime.now(),
                 firstDate: DateTime.now(),
                 lastDate: DateTime(2100),
               );
               if (date != null) {
-                selectedDueDate = DateTime(date.year, date.month, date.day);
+                setState(() {
+                  _selectedDueDate = DateTime(date.year, date.month, date.day);
+                });
               }
             },
           ),
           ElevatedButton(
             onPressed: () async {
-              if (titleController.text.isNotEmpty &&
-                  repeatController.text.isNotEmpty &&
-                  selectedDueDate != null) {
-                if (initialTask != null) {
+              if (_titleController.text.isNotEmpty && _selectedDueDate != null) {
+                if (widget.initialTask != null) {
                   // 编辑现有任务
                   final updatedTask = Task(
-                    id: initialTask!.id,
-                    isImportant: initialTask!.isImportant,
-                    title: titleController.text,
-                    isCompleted: initialTask!.isCompleted,
-                    date: selectedDueDate!,
-                    repeat: repeatController.text,
+                    id: widget.initialTask!.id,
+                    isImportant: widget.initialTask!.isImportant,
+                    title: _titleController.text,
+                    isCompleted: widget.initialTask!.isCompleted,
+                    date: _selectedDueDate!,
+                    repeat: _selectedRepeatType,
                   );
 
-                  await todoProvider.updateTask(updatedTask);
+                  await widget.todoProvider.updateTask(updatedTask);
                 } else {
                   // 添加新任务
                   final newTask = Task(
                     isImportant: false,
-                    title: titleController.text,
+                    title: _titleController.text,
                     isCompleted: false,
-                    date: selectedDueDate!,
-                    repeat: repeatController.text,
+                    date: _selectedDueDate!,
+                    repeat: _selectedRepeatType,
                   );
 
-                  await todoProvider.addTask(newTask);
+                  await widget.todoProvider.addTask(newTask);
                 }
 
                 Navigator.pop(context); // 关闭模态窗口
               }
             },
-            child: Text(initialTask != null ? '更新任务' : '添加任务'),
+            child: Text(widget.initialTask != null ? '更新任务' : '添加任务'),
           ),
         ],
       ),

@@ -7,7 +7,7 @@ import 'package:todo_list_and_clock/widgets/task_card.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  databaseFactoryOrNull = null;
   // 初始化 sqflite_common_ffi
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;

@@ -1,3 +1,5 @@
+import '../enums/repeat_type.dart';
+
 class Task {
   Task({
     this.id,
@@ -5,7 +7,7 @@ class Task {
     required this.title,
     required this.isCompleted,
     required this.date,
-    required this.repeat,
+    this.repeat = RepeatType.none,
   });
 
   int? id;
@@ -13,7 +15,7 @@ class Task {
   String title;
   bool isCompleted;
   DateTime date;
-  String repeat;
+  RepeatType repeat;
 
   void toggleCompleted() {
     isCompleted = !isCompleted;
@@ -26,7 +28,7 @@ class Task {
       'title': title,
       'isCompleted': isCompleted,
       'time': date.toIso8601String(),
-      'repeat': repeat,
+      'repeat': repeat.value,
     };
   }
 
@@ -37,7 +39,7 @@ class Task {
       title: json['title'] as String,
       isCompleted: json['isCompleted'] as bool,
       date: DateTime.parse(json['time'] as String),
-      repeat: json['repeat'] as String,
+      repeat: RepeatType.fromValue(json['repeat'] as String),
     );
   }
 
@@ -48,7 +50,7 @@ class Task {
       'title': title,
       'isCompleted': isCompleted ? 1 : 0,
       'time': date.toIso8601String(),
-      'repeat': repeat,
+      'repeat': repeat.value,
     };
   }
 
@@ -59,7 +61,7 @@ class Task {
       title: map['title'] as String,
       isCompleted: map['isCompleted'] == 1,
       date: DateTime.parse(map['time'] as String),
-      repeat: map['repeat'] as String,
+      repeat: RepeatType.fromValue(map['repeat'] as String),
     );
   }
 }

@@ -35,9 +35,10 @@ class DatabaseHelper {
     }
 
     return await openDatabase(
-      path, 
-      version: 2, 
+      path,
+      version: 3,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -73,6 +74,14 @@ class DatabaseHelper {
         createdAt $textType
       )
     ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // 如果是从旧版本升级，可能需要处理重复周期字段的数据迁移
+    if (oldVersion < 3 && newVersion >= 3) {
+      // 在版本3中，我们改变了重复周期的处理方式，但数据库结构保持不变
+      // 所以这里不需要特殊处理，因为存储格式仍然是字符串
+    }
   }
 
   Future<int> createTask(Task task) async {
