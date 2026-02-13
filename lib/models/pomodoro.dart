@@ -7,6 +7,7 @@ class Pomodoro {
   int duration; // 持续时间（分钟）
   bool isCompleted; // 是否完成
   bool isRest; // 是否是休息时间
+  bool earlyExit; // 是否提前退出
   DateTime createdAt; // 创建时间
 
   Pomodoro({
@@ -18,6 +19,7 @@ class Pomodoro {
     required this.duration,
     required this.isCompleted,
     required this.isRest,
+    this.earlyExit = false, // 默认不是提前退出
     required this.createdAt,
   });
 
@@ -31,6 +33,7 @@ class Pomodoro {
       'duration': duration,
       'isCompleted': isCompleted ? 1 : 0,
       'isRest': isRest ? 1 : 0,
+      'earlyExit': earlyExit ? 1 : 0, // 添加提前退出标志
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -45,6 +48,7 @@ class Pomodoro {
       duration: map['duration'] as int,
       isCompleted: map['isCompleted'] == 1,
       isRest: map['isRest'] == 1,
+      earlyExit: map['earlyExit'] == 1, // 添加提前退出标志
       createdAt: DateTime.parse(map['createdAt'] as String),
     );
   }

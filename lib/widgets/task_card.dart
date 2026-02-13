@@ -111,12 +111,6 @@ class TaskCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(
-                        height: ScreenDisplay.getPaddingSize(
-                          context,
-                          PaddingType.textMargin,
-                        ),
-                      ),
                       Text(
                         '${task.date.toString().padLeft(2, '0')}:${task.date.minute.toString().padLeft(2, '0')} - Repeat: ${task.repeat}',
                         style:

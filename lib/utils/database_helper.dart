@@ -27,11 +27,20 @@ class DatabaseHelper {
       databaseFactory = databaseFactoryFfi;
     }
     final dbPath = await getDatabasesPath();
-
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    // 删除旧数据库文件以强制重新创建（仅适用于开发阶段）
+    if (await databaseExists(path)) {
+      await deleteDatabase(path);
+    }
+
+    return await openDatabase(
+      path, 
+      version: 2, 
+      onCreate: _createDB,
+    );
   }
+
 
   Future _createDB(Database db, int version) async {
     const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -60,6 +69,7 @@ class DatabaseHelper {
         duration $intType,
         isCompleted $boolType,
         isRest $boolType,
+        earlyExit $boolType DEFAULT 0,
         createdAt $textType
       )
     ''');
