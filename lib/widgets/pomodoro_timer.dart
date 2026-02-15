@@ -148,6 +148,18 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
+  double get _progressPercentage {
+    int totalTime;
+    if (_isRest) {
+      totalTime = _restDuration * 60;
+    } else {
+      totalTime = _focusDuration * 60;
+    }
+
+    int elapsedSeconds = totalTime - _remainingSeconds;
+    return totalTime > 0 ? elapsedSeconds / totalTime : 0.0;
+  }
+
   @override
   void dispose() {
     _timer.cancel();
@@ -156,103 +168,84 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor = _isRest
-        ? Theme.of(context)
-              .colorScheme
-              .primaryContainer // 绿色 - 休息时间
-        : Theme.of(context).colorScheme.secondaryContainer; // 蓝色 - 专注时间
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _isRest
-                    ? Theme.of(context).colorScheme.onPrimaryContainer
-                    : Theme.of(context).colorScheme.onSecondaryContainer,
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 360.0,
+            child: LinearProgressIndicator(
+              value: _progressPercentage,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerLow,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _isRest ? Colors.green : Colors.blue,
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              _formatTime(_remainingSeconds),
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: _isRest
-                    ? Theme.of(context).colorScheme.onPrimaryContainer
-                    : Theme.of(context).colorScheme.onSecondaryContainer,
-              ),
-            ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _togglePauseResume,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                  ),
-                  child: Text(
-                    _isRunning ? '暂停' : '继续',
-                    style: TextStyle(
-                      color: _isRest
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.onSecondaryContainer,
-                    ),
-                  ),
+          ),
+          const SizedBox(height: 20),
+          Text(_title, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 20),
+          Text(
+            _formatTime(_remainingSeconds),
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: 40),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _togglePauseResume,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainer,
                 ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    // 结束当前番茄钟
-                    _timer.cancel();
-                    _earlyExit = true; // 标记为提前退出
+                child: Text(_isRunning ? '暂停' : '继续'),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  // 结束当前番茄钟
+                  _timer.cancel();
+                  _earlyExit = true; // 标记为提前退出
 
-                    // 如果已经开始了专注阶段，则保存部分完成的周期
-                    if (_sessionStartTime.isBefore(DateTime.now())) {
-                      try {
-                        final actualDuration = DateTime.now()
-                            .difference(_sessionStartTime)
-                            .inMinutes;
-                        final pomodoro = Pomodoro(
-                          taskId: widget.task.id ?? 0,
-                          title: '中断周期: ${widget.task.title}',
-                          startTime: _sessionStartTime,
-                          endTime: DateTime.now(),
-                          duration: actualDuration > 0 ? actualDuration : 0,
-                          isCompleted: false, // 未完成完整周期
-                          isRest: false, // 部分周期记录
-                          earlyExit: true, // 标记为提前退出
-                          createdAt: DateTime.now(),
-                        );
+                  // 如果已经开始了专注阶段，则保存部分完成的周期
+                  if (_sessionStartTime.isBefore(DateTime.now())) {
+                    try {
+                      final actualDuration = DateTime.now()
+                          .difference(_sessionStartTime)
+                          .inMinutes;
+                      final pomodoro = Pomodoro(
+                        taskId: widget.task.id ?? 0,
+                        title: '中断周期: ${widget.task.title}',
+                        startTime: _sessionStartTime,
+                        endTime: DateTime.now(),
+                        duration: actualDuration > 0 ? actualDuration : 0,
+                        isCompleted: false, // 未完成完整周期
+                        isRest: false, // 部分周期记录
+                        earlyExit: true, // 标记为提前退出
+                        createdAt: DateTime.now(),
+                      );
 
-                        final dbHelper = DatabaseHelper.instance;
-                        await dbHelper.createPomodoro(pomodoro);
-                      } catch (e) {
-                        debugPrint('Error saving interrupted session: $e');
-                      }
+                      final dbHelper = DatabaseHelper.instance;
+                      await dbHelper.createPomodoro(pomodoro);
+                    } catch (e) {
+                      debugPrint('Error saving interrupted session: $e');
                     }
+                  }
 
-                    Navigator.of(context).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                  ),
-                  child: Text(
-                    '结束',
-                    style: TextStyle(
-                      color: _isRest
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.onSecondaryContainer,
-                    ),
-                  ),
+                  Navigator.of(context).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
                 ),
-              ],
-            ),
-          ],
-        ),
+                child: Text('结束', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:todo_list_and_clock/utils/screen_display.dart';
 import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/widgets/pomodoro_timer_picker.dart';
-import 'package:todo_list_and_clock/widgets/pomodoro_timer.dart';
+import 'package:todo_list_and_clock/pages/foucs_page.dart'; // 导入FocusPage
 import 'package:todo_list_and_clock/providers/todo_provider.dart';
 import 'package:todo_list_and_clock/enums/repeat_type.dart';
 
@@ -22,11 +22,11 @@ class TaskCard extends StatelessWidget {
 
     // 如果用户选择了时间，则启动番茄钟
     if (selectedMinutes != null) {
-      // 导航到番茄钟计时器页面
+      // 导航到专注页面
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
-              PomodoroTimer(task: task, durationInMinutes: selectedMinutes),
+              FocusPage(task: task, durationInMinutes: selectedMinutes),
         ),
       );
     }
