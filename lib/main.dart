@@ -1,22 +1,35 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:todo_list_and_clock/pages/todo_page.dart';
+import 'package:todo_list_and_clock/pages/statistics_page.dart';
 import 'package:todo_list_and_clock/utils/task_database_factory.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_list_and_clock/providers/todo_provider.dart';
+import 'package:todo_list_and_clock/providers/focus_provider.dart';
+import 'package:todo_list_and_clock/providers/music_provider.dart';
 import 'package:todo_list_and_clock/widgets/task_card.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 初始化数据库工厂
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     TaskDatabaseFactory.initialize();
   }
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => TodoProvider()..loadTasks(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => TodoProvider()..loadTasks(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => FocusProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => MusicProvider(),
+        ),
+      ],
       child: MyApp(),
     ),
   );
@@ -86,6 +99,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Consumer<TodoProvider>(
       builder: (context, todoProvider, child) {
+        Widget selectedPage;
+        switch (_selectedIndex) {
+          case 0:
+          case 1:
+          case 2:
+            selectedPage = TodoPage(
+              subject: _selectedIndex == 0
+                  ? "语文"
+                  : _selectedIndex == 1
+                  ? "数学"
+                  : "英语",
+            );
+            break;
+          case 3:
+            selectedPage = StatisticsPage();
+            break;
+          default:
+            selectedPage = TodoPage(subject: "语文");
+        }
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
@@ -105,6 +138,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     NavigationRailDestination(
                       icon: Icon(Icons.science),
                       label: Text("英语"),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.bar_chart),
+                      label: Text("统计"),
                     ),
                   ],
                   selectedIndex: _selectedIndex,
@@ -131,39 +168,35 @@ class _MyHomePageState extends State<MyHomePage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: TodoPage(
-                      subject: _selectedIndex == 0
-                          ? "语文"
-                          : _selectedIndex == 1
-                          ? "数学"
-                          : "英语",
-                    ),
+                    child: selectedPage,
                   ),
                 ),
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              // 使用 Provider 来添加任务
-              todoProvider.loadTasks(); // 确保数据是最新的
-              // 我们将在 TodoPage 内部处理添加任务的逻辑
-              // 通过 Provider 触发添加任务对话框
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (BuildContext context) {
-                  return TaskForm(
-                    context: context,
-                    todoProvider: todoProvider,
-                    initialTask: null,
-                  );
-                },
-              );
-            },
-            label: const Text("添加任务"),
-            icon: const Icon(Icons.add),
-          ),
+          floatingActionButton: _selectedIndex < 3 // 只在待办事项页面显示浮动按钮
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    // 使用 Provider 来添加任务
+                    todoProvider.loadTasks(); // 确保数据是最新的
+                    // 我们将在 TodoPage 内部处理添加任务的逻辑
+                    // 通过 Provider 触发添加任务对话框
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (BuildContext context) {
+                        return TaskForm(
+                          context: context,
+                          todoProvider: todoProvider,
+                          initialTask: null,
+                        );
+                      },
+                    );
+                  },
+                  label: const Text("添加任务"),
+                  icon: const Icon(Icons.add),
+                )
+              : null,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },

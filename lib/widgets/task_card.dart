@@ -181,12 +181,16 @@ class _TaskFormState extends State<TaskForm> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.initialTask?.title ?? '');
+    _titleController = TextEditingController(
+      text: widget.initialTask?.title ?? '',
+    );
     _selectedDueDate = widget.initialTask?.date;
     _selectedRepeatType = widget.initialTask?.repeat ?? RepeatType.none;
-    
+
     // 如果是编辑模式且设置了重复周期但没有设置截止日期，根据重复周期计算截止日期
-    if (widget.initialTask != null && _selectedRepeatType != RepeatType.none && _selectedDueDate == null) {
+    if (widget.initialTask != null &&
+        _selectedRepeatType != RepeatType.none &&
+        _selectedDueDate == null) {
       _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
     }
   }
@@ -226,7 +230,7 @@ class _TaskFormState extends State<TaskForm> {
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: DropdownButtonFormField<RepeatType>(
-              value: _selectedRepeatType,
+              initialValue: _selectedRepeatType,
               decoration: const InputDecoration(labelText: '重复周期'),
               items: RepeatType.values.map((RepeatType repeatType) {
                 return DropdownMenuItem<RepeatType>(
@@ -266,7 +270,8 @@ class _TaskFormState extends State<TaskForm> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_titleController.text.isNotEmpty && _selectedDueDate != null) {
+              if (_titleController.text.isNotEmpty &&
+                  _selectedDueDate != null) {
                 if (widget.initialTask != null) {
                   // 编辑现有任务
                   final updatedTask = Task(

@@ -241,7 +241,12 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.errorContainer,
                 ),
-                child: Text('结束', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  '结束',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
               ),
             ],
           ),
