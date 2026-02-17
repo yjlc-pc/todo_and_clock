@@ -3,6 +3,7 @@ import '../enums/repeat_type.dart';
 class Task {
   Task({
     this.id,
+    this.categoryId, // 新增分类ID
     required this.isImportant,
     required this.title,
     required this.isCompleted,
@@ -11,6 +12,7 @@ class Task {
   });
 
   int? id;
+  int? categoryId; // 新增分类ID
   bool isImportant;
   String title;
   bool isCompleted;
@@ -46,6 +48,7 @@ class Task {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'categoryId': categoryId, // 新增字段
       'isImportant': isImportant ? 1 : 0,
       'title': title,
       'isCompleted': isCompleted ? 1 : 0,
@@ -57,6 +60,7 @@ class Task {
   factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
       id: map['id'] as int?,
+      categoryId: map['categoryId'] as int?, // 新增字段
       isImportant: map['isImportant'] == 1,
       title: map['title'] as String,
       isCompleted: map['isCompleted'] == 1,

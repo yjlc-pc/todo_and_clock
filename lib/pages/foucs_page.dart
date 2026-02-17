@@ -214,7 +214,6 @@ class _FocusPageState extends State<FocusPage> {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: PomodoroTimer(
-        task: widget.task,
         durationInMinutes: widget.durationInMinutes,
       ),
     );

@@ -4,11 +4,10 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/models/pomodoro.dart';
+import 'package:todo_list_and_clock/models/category.dart';
 import 'database_factory.dart';
 import 'data_operation.dart';
 
-// 导入Database类型
-import 'package:sqflite/sqflite.dart';
 
 /// 任务专用数据库工厂实现
 class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
@@ -18,7 +17,7 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
   TaskDatabaseFactory._internal();
   
   static bool _isInitialized = false;
-  
+
   /// 初始化数据库工厂
   static void initialize() {
     if (!_isInitialized && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
@@ -38,7 +37,7 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
 
     // 初始化数据库工厂
     initialize();
-    
+
     final database = await _createTaskDatabase(dbName);
     _databases[dbName] = database;
     return database;
@@ -51,13 +50,13 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
 
     // 检查数据库是否存在，如果存在则直接打开
     if (await databaseExists(dbPath)) {
-      return await openDatabase(dbPath, version: 3, onUpgrade: _onUpgrade);
+      return await openDatabase(dbPath, version: 4, onUpgrade: _onUpgrade);
     }
 
     // 否则创建新数据库
     return await openDatabase(
       dbPath,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -71,13 +70,24 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
     const intType = 'INTEGER NOT NULL';
 
     await db.execute('''
+      CREATE TABLE categories (
+        id $idType,
+        name $textType,
+        icon TEXT,
+        color TEXT
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE tasks (
         id $idType,
+        categoryId INTEGER,
         isImportant $boolType,
         title $textType,
         isCompleted $boolType,
         time $textType,
-        repeat $textType
+        repeat $textType,
+        FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE SET NULL
       )
     ''');
 
@@ -111,6 +121,42 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
         );
       }
     }
+    
+    if (oldVersion < 4 && newVersion >= 4) {
+      // 版本4的更新逻辑 - 添加分类功能
+      // 首先创建分类表（如果不存在）
+      try {
+        await db.rawQuery('SELECT name FROM categories LIMIT 1;');
+      } catch (e) {
+        // 如果查询失败，说明表不存在，需要创建
+        await _createCategoriesTable(db);
+      }
+      
+      // 然后添加分类ID列到任务表（如果不存在）
+      try {
+        await db.rawQuery('SELECT categoryId FROM tasks LIMIT 1;');
+      } catch (e) {
+        // 如果查询失败，说明列不存在，需要添加
+        await db.execute(
+          'ALTER TABLE tasks ADD COLUMN categoryId INTEGER REFERENCES categories (id) ON DELETE SET NULL;',
+        );
+      }
+    }
+  }
+  
+  /// 创建分类表
+  Future<void> _createCategoriesTable(Database db) async {
+    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    const textType = 'TEXT NOT NULL';
+    
+    await db.execute('''
+      CREATE TABLE categories (
+        id $idType,
+        name $textType,
+        icon TEXT,
+        color TEXT
+      )
+    ''');
   }
 
   /// 创建任务
@@ -183,6 +229,36 @@ class TaskDatabaseFactory implements IDatabaseFactory, IDataOperation {
   @override
   Future<int> deletePomodoro(Database db, int id) async {
     return await db.delete('pomodoros', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// 创建分类
+  @override
+  Future<int> createCategory(Database db, Category category) async {
+    return await db.insert('categories', category.toMap());
+  }
+
+  /// 读取所有分类
+  @override
+  Future<List<Category>> readAllCategories(Database db) async {
+    final result = await db.query('categories');
+    return result.map((json) => Category.fromMap(json)).toList();
+  }
+
+  /// 更新分类
+  @override
+  Future<int> updateCategory(Database db, Category category) async {
+    return await db.update(
+      'categories',
+      category.toMap(),
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+  }
+
+  /// 删除分类
+  @override
+  Future<int> deleteCategory(Database db, int id) async {
+    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
   @override

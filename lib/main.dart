@@ -21,14 +21,13 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (context) => TodoProvider()..loadTasks(),
+          create: (context) => TodoProvider()
+            ..loadTasks()
+            ..initializeDefaultCategories()
+            ..loadCategories(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => FocusProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => MusicProvider(),
-        ),
+        ChangeNotifierProvider(create: (context) => FocusProvider()),
+        ChangeNotifierProvider(create: (context) => MusicProvider()),
       ],
       child: MyApp(),
     ),
@@ -100,23 +99,10 @@ class _MyHomePageState extends State<MyHomePage> {
     return Consumer<TodoProvider>(
       builder: (context, todoProvider, child) {
         Widget selectedPage;
-        switch (_selectedIndex) {
-          case 0:
-          case 1:
-          case 2:
-            selectedPage = TodoPage(
-              subject: _selectedIndex == 0
-                  ? "语文"
-                  : _selectedIndex == 1
-                  ? "数学"
-                  : "英语",
-            );
-            break;
-          case 3:
-            selectedPage = StatisticsPage();
-            break;
-          default:
-            selectedPage = TodoPage(subject: "语文");
+        if (_selectedIndex == 0) {
+          selectedPage = TodoPage();
+        } else {
+          selectedPage = StatisticsPage();
         }
 
         return Scaffold(
@@ -124,46 +110,41 @@ class _MyHomePageState extends State<MyHomePage> {
           body: SafeArea(
             child: Row(
               children: <Widget>[
-                NavigationRail(
-                  destinations: const <NavigationRailDestination>[
-                    // TODO: 支持添加分类
-                    NavigationRailDestination(
-                      icon: Icon(Icons.edit),
-                      label: Text("语文"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.calculate),
-                      label: Text("数学"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.science),
-                      label: Text("英语"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.bar_chart),
-                      label: Text("统计"),
-                    ),
-                  ],
-                  selectedIndex: _selectedIndex,
-                  groupAlignment: groupAlignment,
-                  onDestinationSelected: (int index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
+                Consumer<TodoProvider>(
+                  builder: (context, todoProvider, child) {
+                    return NavigationRail(
+                      destinations: [
+                        const NavigationRailDestination(
+                          icon: Icon(Icons.today),
+                          label: Text("任务"),
+                        ),
+                        const NavigationRailDestination(
+                          icon: Icon(Icons.bar_chart),
+                          label: Text("统计"),
+                        ),
+                      ],
+                      selectedIndex: _selectedIndex,
+                      groupAlignment: groupAlignment,
+                      onDestinationSelected: (int index) {
+                        setState(() {
+                          _selectedIndex = index;
+                        });
+                      },
+                      labelType: labelType,
+                      trailing: IconButton(
+                        tooltip: '切换深色模式',
+                        icon: Icon(
+                          currentThemeMode == ThemeMode.dark
+                              ? Icons.light_mode
+                              : Icons.dark_mode,
+                        ),
+                        onPressed: widget.toggleTheme,
+                      ),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHigh,
+                    );
                   },
-                  labelType: labelType,
-                  trailing: IconButton(
-                    tooltip: '切换深色模式',
-                    icon: Icon(
-                      currentThemeMode == ThemeMode.dark
-                          ? Icons.light_mode
-                          : Icons.dark_mode,
-                    ),
-                    onPressed: widget.toggleTheme,
-                  ),
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHigh,
                 ),
                 Expanded(
                   child: Padding(
@@ -174,7 +155,9 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
-          floatingActionButton: _selectedIndex < 3 // 只在待办事项页面显示浮动按钮
+          floatingActionButton:
+              _selectedIndex ==
+                  1 // 只在待办事项页面显示浮动按钮
               ? FloatingActionButton.extended(
                   onPressed: () {
                     // 使用 Provider 来添加任务

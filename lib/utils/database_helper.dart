@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/models/pomodoro.dart';
+import 'package:todo_list_and_clock/models/category.dart';
 import 'task_database_factory.dart';
 
 class DatabaseHelper {
@@ -78,6 +79,31 @@ class DatabaseHelper {
     final db = await instance.database;
     final factory = TaskDatabaseFactory.instance;
     return await factory.deletePomodoro(db, id);
+  }
+
+  // 分类相关操作
+  Future<int> createCategory(Category category) async {
+    final db = await instance.database;
+    final factory = TaskDatabaseFactory.instance;
+    return await factory.createCategory(db, category);
+  }
+
+  Future<List<Category>> readAllCategories() async {
+    final db = await instance.database;
+    final factory = TaskDatabaseFactory.instance;
+    return await factory.readAllCategories(db);
+  }
+
+  Future<int> updateCategory(Category category) async {
+    final db = await instance.database;
+    final factory = TaskDatabaseFactory.instance;
+    return await factory.updateCategory(db, category);
+  }
+
+  Future<int> deleteCategory(int id) async {
+    final db = await instance.database;
+    final factory = TaskDatabaseFactory.instance;
+    return await factory.deleteCategory(db, id);
   }
 
   Future close() async {

@@ -80,6 +80,11 @@ class FocusProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void togglePauseResume() {
+    _isRunning = !_isRunning;
+    notifyListeners();
+  }
+
   void _endTimer() async {
     _timer.cancel();
     _isRunning = false;
@@ -97,7 +102,7 @@ class FocusProvider extends ChangeNotifier {
 
   /// 保存完整的专注-休息周期记录
   Future<void> _saveCompleteSession() async {
-    final totalDuration = _focusDuration + _restDuration; // 总时长 = 专注时间 + 休息时间
+    // 只记录专注时间，不包括休息时间
     final pomodoro = Pomodoro(
       taskId: _task.id ?? 0,
       title: _earlyExit
@@ -105,7 +110,7 @@ class FocusProvider extends ChangeNotifier {
           : '完整周期: ${_task.title}', // 根据是否提前退出设置标题
       startTime: _sessionStartTime, // 使用会话开始时间
       endTime: DateTime.now(), // 使用当前时间作为整个周期的结束时间
-      duration: totalDuration, // 总时长
+      duration: _focusDuration, // 只记录专注时间，不包括休息时间
       isCompleted: !_earlyExit, // 只有非提前退出才算完成
       isRest: false, // 将完整周期标记为非休息时间
       earlyExit: _earlyExit, // 设置提前退出标志
@@ -136,15 +141,33 @@ class FocusProvider extends ChangeNotifier {
 
   Future<void> _saveInterruptedSession() async {
     try {
-      final actualDuration = DateTime.now()
-          .difference(_sessionStartTime)
-          .inMinutes;
+      // 计算实际专注时间（不包括休息时间）
+      int actualFocusDuration;
+      if (_isRest) {
+        // 如果当前处于休息阶段，说明专注阶段已经完成
+        actualFocusDuration = _focusDuration;
+      } else {
+        // 如果仍在专注阶段，计算已过去的专注时间
+        final elapsedSeconds = DateTime.now().difference(_sessionStartTime).inSeconds;
+        
+        // 验证elapsedSeconds是否合理（不超过设定的专注时间对应的秒数）
+        final maxExpectedSeconds = _focusDuration * 60;
+        int validElapsedSeconds = elapsedSeconds > maxExpectedSeconds ? maxExpectedSeconds : elapsedSeconds;
+        
+        actualFocusDuration = (validElapsedSeconds / 60).round();
+
+        // 确保专注时间不超过设定的专注时长
+        if (actualFocusDuration > _focusDuration) {
+          actualFocusDuration = _focusDuration;
+        }
+      }
+
       final pomodoro = Pomodoro(
         taskId: _task.id ?? 0,
         title: '中断周期: ${_task.title}',
         startTime: _sessionStartTime,
         endTime: DateTime.now(),
-        duration: actualDuration > 0 ? actualDuration : 0,
+        duration: actualFocusDuration > 0 ? actualFocusDuration : 0,
         isCompleted: false, // 未完成完整周期
         isRest: false, // 部分周期记录
         earlyExit: true, // 标记为提前退出
