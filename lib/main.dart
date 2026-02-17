@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:todo_list_and_clock/pages/todo_page.dart';
 import 'package:todo_list_and_clock/pages/statistics_page.dart';
 import 'package:todo_list_and_clock/utils/task_database_factory.dart';
+import 'package:todo_list_and_clock/utils/screen_display.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_list_and_clock/providers/todo_provider.dart';
 import 'package:todo_list_and_clock/providers/focus_provider.dart';
@@ -105,56 +106,38 @@ class _MyHomePageState extends State<MyHomePage> {
           selectedPage = StatisticsPage();
         }
 
+        // 判断是否为移动端布局
+        final isMobile = ScreenDisplay.isMobileLayout(context);
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          body: SafeArea(
-            child: Row(
-              children: <Widget>[
-                Consumer<TodoProvider>(
-                  builder: (context, todoProvider, child) {
-                    return NavigationRail(
-                      destinations: [
-                        const NavigationRailDestination(
-                          icon: Icon(Icons.today),
-                          label: Text("任务"),
-                        ),
-                        const NavigationRailDestination(
-                          icon: Icon(Icons.bar_chart),
-                          label: Text("统计"),
-                        ),
-                      ],
-                      selectedIndex: _selectedIndex,
-                      groupAlignment: groupAlignment,
-                      onDestinationSelected: (int index) {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
-                      labelType: labelType,
-                      trailing: IconButton(
-                        tooltip: '切换深色模式',
-                        icon: Icon(
-                          currentThemeMode == ThemeMode.dark
-                              ? Icons.light_mode
-                              : Icons.dark_mode,
-                        ),
-                        onPressed: widget.toggleTheme,
-                      ),
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHigh,
-                    );
+          body: isMobile
+              ? _buildMobileLayout(selectedPage)
+              : _buildDesktopLayout(
+                  selectedPage,
+                  todoProvider,
+                  currentThemeMode,
+                ),
+          bottomNavigationBar: isMobile
+              ? BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
                   },
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: selectedPage,
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.today),
+                      label: "任务",
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.bar_chart),
+                      label: "统计",
+                    ),
+                  ],
+                )
+              : null,
           floatingActionButton:
               _selectedIndex ==
                   0 // 只在待办事项页面显示浮动按钮
@@ -183,6 +166,70 @@ class _MyHomePageState extends State<MyHomePage> {
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
+    );
+  }
+
+  /// 构建移动端布局（使用 BottomNavigationBar）
+  Widget _buildMobileLayout(Widget selectedPage) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: selectedPage,
+    );
+  }
+
+  /// 构建桌面端布局（使用 NavigationRail）
+  Widget _buildDesktopLayout(
+    Widget selectedPage,
+    TodoProvider todoProvider,
+    ThemeMode currentThemeMode,
+  ) {
+    return SafeArea(
+      child: Row(
+        children: <Widget>[
+          Consumer<TodoProvider>(
+            builder: (context, todoProvider, child) {
+              return NavigationRail(
+                destinations: [
+                  const NavigationRailDestination(
+                    icon: Icon(Icons.today),
+                    label: Text("任务"),
+                  ),
+                  const NavigationRailDestination(
+                    icon: Icon(Icons.bar_chart),
+                    label: Text("统计"),
+                  ),
+                ],
+                selectedIndex: _selectedIndex,
+                groupAlignment: groupAlignment,
+                onDestinationSelected: (int index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                labelType: labelType,
+                trailing: IconButton(
+                  tooltip: '切换深色模式',
+                  icon: Icon(
+                    currentThemeMode == ThemeMode.dark
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
+                  ),
+                  onPressed: widget.toggleTheme,
+                ),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerLow,
+              );
+            },
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: selectedPage,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

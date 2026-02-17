@@ -206,13 +206,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
             padding: const EdgeInsets.all(16.0),
             child: Wrap(
               spacing: 16.0, // 主轴(水平)方向间距
-              runSpacing: 16.0, // 纵轴（垂直）方向间距
-              alignment: WrapAlignment.center,
+              runSpacing: 12.0, // 纵轴（垂直）方向间距
+              alignment: WrapAlignment.start,
               children: <Widget>[
                 TodayFocusTimeCard(focusTime: todayFocusTime),
-                WeeklyFocusChartCard(weeklyFocusHours: weeklyFocusHours),
+
                 WeeklyCompletedTasksCard(completedTasks: weeklyCompletedTasks),
                 MostFocusTimeCard(mostFocusTime: mostFocusTime),
+
+                WeeklyFocusChartCard(weeklyFocusHours: weeklyFocusHours),
                 RandomEncouragementCard(
                   encouragementMessages: encouragementMessages,
                 ),

@@ -25,7 +25,7 @@ class _FocusPageState extends State<FocusPage> {
   @override
   void initState() {
     super.initState();
-    // 初始化FocusProvider
+    // 初始化 FocusProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final focusProvider = Provider.of<FocusProvider>(context, listen: false);
       focusProvider.initialize(widget.task, widget.durationInMinutes);
@@ -39,7 +39,7 @@ class _FocusPageState extends State<FocusPage> {
           url: "https://",
           image: Image.network("localhost:8080"),
         ),
-        // TODO: 从JSON文件
+        // TODO: 从 JSON 文件预置一些歌曲
       ]);
     });
   }
@@ -55,9 +55,8 @@ class _FocusPageState extends State<FocusPage> {
           });
         }
 
-        // 获取屏幕宽度以判断布局模式
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isCompactLayout = screenWidth < 768; // 小于768px使用紧凑布局
+        // 使用 ScreenDisplay 判断是否为移动端布局
+        final isCompactLayout = ScreenDisplay.isMobileLayout(context);
 
         return Scaffold(
           appBar: AppBar(
@@ -88,8 +87,8 @@ class _FocusPageState extends State<FocusPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('任务: ${widget.task.title}'),
-              Text('时长: ${widget.durationInMinutes}分钟'),
+              Text('任务：${widget.task.title}'),
+              Text('时长：${widget.durationInMinutes}分钟'),
             ],
           ),
           actions: [
@@ -111,21 +110,9 @@ class _FocusPageState extends State<FocusPage> {
     return Row(
       children: [
         // 左栏 - 歌曲信息区
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: musicInfoCard(focusProvider),
-          ),
-        ),
+        Expanded(flex: 1, child: musicInfoCard(focusProvider)),
         // 右栏 - 专注时段控制区
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: focusControlSection(focusProvider),
-          ),
-        ),
+        Expanded(flex: 1, child: focusControlSection(focusProvider)),
       ],
     );
   }
@@ -135,15 +122,9 @@ class _FocusPageState extends State<FocusPage> {
     return Column(
       children: [
         // 上栏 - 专注时段控制区
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          child: focusControlSection(focusProvider),
-        ),
+        focusControlSection(focusProvider),
         // 下栏 - 歌曲信息区
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          child: musicInfoCard(focusProvider),
-        ),
+        musicInfoCard(focusProvider),
       ],
     );
   }
@@ -153,11 +134,12 @@ class _FocusPageState extends State<FocusPage> {
     return Consumer<MusicProvider>(
       builder: (context, musicProvider, child) {
         return Card(
-          color: Theme.of(context).colorScheme.surfaceContainer,
+          color: Theme.of(context).colorScheme.surfaceContainerLowest,
           child: Center(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(width: 48, height: 48, child: Placeholder()),
+                SizedBox(width: 96, height: 96, child: Placeholder()),
                 Text(
                   musicProvider.currentSong.title,
                   style: ScreenDisplay.getTextTheme(
@@ -184,38 +166,136 @@ class _FocusPageState extends State<FocusPage> {
   Widget musicPlayController() {
     return Consumer<MusicProvider>(
       builder: (context, musicProvider, child) {
-        return Row(
-          children: [
-            IconButton.outlined(
-              onPressed: musicProvider.previousSong,
-              icon: Icon(Icons.arrow_left),
-            ),
-            SizedBox(width: 16),
-            IconButton.filled(
-              onPressed: musicProvider.togglePlaying,
-              icon: musicProvider.isPlaying
-                  ? Icon(Icons.pause)
-                  : Icon(Icons.play_arrow),
-              color: Theme.of(context).colorScheme.primaryContainer,
-            ),
-            SizedBox(width: 16),
-            IconButton.outlined(
-              onPressed: musicProvider.nextSong,
-              icon: Icon(Icons.arrow_right),
-            ),
-          ],
+        final colorScheme = Theme.of(context).colorScheme;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 上一曲按钮
+                  IconButton.filledTonal(
+                    onPressed: musicProvider.previousSong,
+                    icon: const Icon(Icons.skip_previous_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: colorScheme.secondaryContainer,
+                      foregroundColor: colorScheme.onSecondaryContainer,
+                      fixedSize: const Size(48, 48),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // 播放/暂停按钮（更大更突出）
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary,
+                    ),
+                    child: IconButton(
+                      onPressed: musicProvider.togglePlaying,
+                      icon: Icon(
+                        musicProvider.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        size: 32,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: colorScheme.onPrimary,
+                        fixedSize: const Size(64, 64),
+                        shadowColor: Colors.transparent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // 下一曲按钮
+                  IconButton.filledTonal(
+                    onPressed: musicProvider.nextSong,
+                    icon: const Icon(Icons.skip_next_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: colorScheme.secondaryContainer,
+                      foregroundColor: colorScheme.onSecondaryContainer,
+                      fixedSize: const Size(48, 48),
+                    ),
+                  ),
+                ],
+              ),
+              // 播放进度条
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
+                child: Column(
+                  children: [
+                    SliderTheme(
+                      data: SliderThemeData(
+                        trackHeight: 4.0,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 6.0,
+                        ),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 14.0,
+                        ),
+                        activeTrackColor: colorScheme.primary,
+                        inactiveTrackColor: colorScheme.surfaceContainerLow,
+                        thumbColor: colorScheme.primary,
+                        overlayColor: colorScheme.primary.withValues(
+                          alpha: 0.2,
+                        ),
+                      ),
+                      child: Slider(
+                        value: musicProvider.position.inSeconds.toDouble(),
+                        min: 0.0,
+                        max: musicProvider.duration.inSeconds.toDouble(),
+                        onChanged: (value) {
+                          musicProvider.seekTo(
+                            Duration(seconds: value.toInt()),
+                          );
+                        },
+                      ),
+                    ),
+                    // 时间显示
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDuration(musicProvider.position),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: colorScheme.outline),
+                        ),
+                        Text(
+                          _formatDuration(musicProvider.duration),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: colorScheme.outline),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   // 构建专注时段控制区域
   Widget focusControlSection(FocusProvider focusProvider) {
     return Card(
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      child: PomodoroTimer(
-        durationInMinutes: widget.durationInMinutes,
-      ),
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: PomodoroTimer(durationInMinutes: widget.durationInMinutes),
     );
   }
 }

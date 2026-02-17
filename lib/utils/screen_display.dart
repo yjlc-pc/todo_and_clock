@@ -6,6 +6,15 @@ enum GeneralTextStyle { display, headline, title, label, body }
 
 enum PaddingType { widgetMargin, widgetPadding, textMargin }
 
+/// 屏幕宽度断点常量
+class Breakpoint {
+  /// 移动端与平板/桌面端的断点 (800px)
+  static const double mobile = 800.0;
+  
+  /// 平板与桌面端的断点 (1200px)
+  static const double tablet = 1200.0;
+}
+
 class ScreenDisplay {
   static ScreenType getScreenType(BuildContext context) {
     switch (MediaQuery.of(context).size.width) {
@@ -27,6 +36,21 @@ class ScreenDisplay {
       default:
         return ScreenType.medium;
     }
+  }
+
+  /// 判断是否为移动端布局（宽度 < 800px）
+  static bool isMobileLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width < Breakpoint.mobile;
+  }
+
+  /// 判断是否为平板/桌面端布局（宽度 >= 800px）
+  static bool isDesktopLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width >= Breakpoint.mobile;
+  }
+
+  /// 判断是否为窄屏布局（可自定义断点）
+  static bool isNarrowScreen(BuildContext context, {double breakpoint = Breakpoint.mobile}) {
+    return MediaQuery.of(context).size.width < breakpoint;
   }
 
   static TextStyle getTextTheme(GeneralTextStyle style, BuildContext context) {

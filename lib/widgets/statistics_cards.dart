@@ -10,6 +10,7 @@ class TodayFocusTimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -51,6 +52,7 @@ class WeeklyFocusChartCard extends StatelessWidget {
             children: [
               // 总时间Card
               Card(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -97,6 +99,7 @@ class WeeklyFocusChartCard extends StatelessWidget {
               const SizedBox(height: 16),
               // 图表Card
               Card(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -114,7 +117,6 @@ class WeeklyFocusChartCard extends StatelessWidget {
                         child: BarChart(
                           BarChartData(
                             alignment: BarChartAlignment.spaceAround,
-                            maxY: 4,
                             barTouchData: BarTouchData(enabled: false),
                             titlesData: FlTitlesData(
                               show: true,
@@ -170,11 +172,10 @@ class WeeklyFocusChartCard extends StatelessWidget {
                                 barRods: [
                                   BarChartRodData(
                                     toY: value,
-                                    gradient: LinearGradient(
-                                      colors: [Colors.blue, Colors.lightBlue],
-                                    ),
                                     width: 16,
-                                    borderRadius: BorderRadius.zero,
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(8.0),
+                                    ),
                                   ),
                                 ],
                               );
@@ -191,6 +192,7 @@ class WeeklyFocusChartCard extends StatelessWidget {
         } else {
           // 宽屏模式：保持原有布局
           return Card(
+            color: Theme.of(context).colorScheme.surfaceContainerLowest,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -227,7 +229,7 @@ class WeeklyFocusChartCard extends StatelessWidget {
                       ),
                       Expanded(
                         child: Container(
-                          height: 240,
+                          height: 200,
                           padding: EdgeInsets.only(left: 8),
                           child: BarChart(
                             BarChartData(
@@ -287,11 +289,10 @@ class WeeklyFocusChartCard extends StatelessWidget {
                                   barRods: [
                                     BarChartRodData(
                                       toY: value,
-                                      gradient: LinearGradient(
-                                        colors: [Colors.blue, Colors.lightBlue],
-                                      ),
                                       width: 16,
-                                      borderRadius: BorderRadius.zero,
+                                      borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(8.0),
+                                      ),
                                     ),
                                   ],
                                 );
@@ -321,6 +322,7 @@ class WeeklyCompletedTasksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -353,6 +355,7 @@ class MostFocusTimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -393,6 +396,7 @@ class RandomEncouragementCard extends StatelessWidget {
             encouragementMessages.length];
 
     return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

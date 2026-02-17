@@ -4,7 +4,7 @@ import 'package:todo_list_and_clock/providers/todo_provider.dart';
 import 'package:todo_list_and_clock/utils/screen_display.dart';
 import 'package:todo_list_and_clock/models/task.dart';
 import 'package:todo_list_and_clock/widgets/pomodoro_timer_picker.dart';
-import 'package:todo_list_and_clock/pages/foucs_page.dart'; // 导入FocusPage
+import 'package:todo_list_and_clock/pages/foucs_page.dart';
 import 'package:todo_list_and_clock/enums/repeat_type.dart';
 
 class TaskCard extends StatefulWidget {
@@ -17,7 +17,6 @@ class TaskCard extends StatefulWidget {
 
 class _TaskCardState extends State<TaskCard> {
   Future<void> _startPomodoroSession(BuildContext context) async {
-    // 弹出时间选择器
     final selectedMinutes = await showDialog<int>(
       context: context,
       builder: (BuildContext context) {
@@ -25,9 +24,7 @@ class _TaskCardState extends State<TaskCard> {
       },
     );
 
-    // 如果用户选择了时间，并且组件仍然挂载，则启动番茄钟
     if (selectedMinutes != null && mounted) {
-      // 在下一个帧中执行导航，确保组件仍然挂载
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.of(context).push(
@@ -51,7 +48,7 @@ class _TaskCardState extends State<TaskCard> {
         return TaskForm(
           context: context,
           todoProvider: todoProvider,
-          initialTask: widget.task, // 传递当前任务用于编辑
+          initialTask: widget.task,
         );
       },
     );
@@ -67,14 +64,14 @@ class _TaskCardState extends State<TaskCard> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // 关闭对话框
+                Navigator.of(context).pop();
               },
               child: const Text('取消'),
             ),
             TextButton(
               onPressed: () {
-                todoProvider.deleteTask(widget.task.id!); // 删除任务
-                Navigator.of(context).pop(); // 关闭对话框
+                todoProvider.deleteTask(widget.task.id!);
+                Navigator.of(context).pop();
               },
               child: const Text('删除'),
             ),
@@ -88,78 +85,86 @@ class _TaskCardState extends State<TaskCard> {
   Widget build(BuildContext context) {
     return Consumer<TodoProvider>(
       builder: (context, todoProvider, child) {
-        return Card(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-          child: Padding(
-            padding: EdgeInsets.all(4.0),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: widget.task.isCompleted,
-                  onChanged: (bool? complete) {
-                    if (complete == null) return;
-                    // 更新任务状态
-                    final updatedTask = Task(
-                      id: widget.task.id,
-                      isImportant: widget.task.isImportant,
-                      title: widget.task.title,
-                      isCompleted: complete,
-                      date: widget.task.date,
-                      repeat: widget.task.repeat,
-                    );
-                    todoProvider.updateTask(updatedTask);
-                  },
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.task.title,
-                        style: ScreenDisplay.getTextTheme(
-                          GeneralTextStyle.body,
-                          context,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${widget.task.date.toString()} - 重复周期: ${widget.task.repeat.displayName}',
-                        style:
-                            ScreenDisplay.getTextTheme(
-                              GeneralTextStyle.label,
-                              context,
-                            ).copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        _showEditDialog(context, todoProvider);
-                      },
-                      icon: Icon(Icons.edit),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _confirmDeleteTask(context, todoProvider);
-                      },
-                      icon: Icon(Icons.delete),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _startPomodoroSession(context);
-                      },
-                      icon: Icon(Icons.alarm),
-                    ),
-                  ],
-                ),
-              ],
+        return ListTile(
+          leading: Checkbox(
+            value: widget.task.isCompleted,
+            onChanged: (bool? complete) {
+              if (complete == null) return;
+              final updatedTask = Task(
+                id: widget.task.id,
+                isImportant: widget.task.isImportant,
+                title: widget.task.title,
+                isCompleted: complete,
+                date: widget.task.date,
+                repeat: widget.task.repeat,
+              );
+              todoProvider.updateTask(updatedTask);
+            },
+          ),
+          title: Text(
+            widget.task.title,
+            style: ScreenDisplay.getTextTheme(
+              GeneralTextStyle.body,
+              context,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '${widget.task.date.year}-${widget.task.date.month.toString().padLeft(2, '0')}-${widget.task.date.day.toString().padLeft(2, '0')} - 重复周期：${widget.task.repeat.displayName}',
+            style: ScreenDisplay.getTextTheme(
+              GeneralTextStyle.label,
+              context,
+            ).copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () {
+                  _startPomodoroSession(context);
+                },
+                icon: const Icon(Icons.alarm),
+                tooltip: '开始专注',
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                tooltip: '更多操作',
+                onSelected: (String value) {
+                  if (value == 'edit') {
+                    _showEditDialog(context, todoProvider);
+                  } else if (value == 'delete') {
+                    _confirmDeleteTask(context, todoProvider);
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 20),
+                          SizedBox(width: 8),
+                          Text('编辑'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, size: 20),
+                          SizedBox(width: 8),
+                          Text('删除'),
+                        ],
+                      ),
+                    ),
+                  ];
+                },
+              ),
+            ],
           ),
         );
       },
@@ -167,18 +172,17 @@ class _TaskCardState extends State<TaskCard> {
   }
 }
 
-// 任务表单组件，用于添加和编辑任务
 class TaskForm extends StatefulWidget {
   const TaskForm({
     super.key,
     required this.context,
     required this.todoProvider,
-    this.initialTask, // 初始任务，用于编辑
+    this.initialTask,
   });
 
   final BuildContext context;
   final TodoProvider todoProvider;
-  final Task? initialTask; // 可选的任务对象，如果为空则是添加新任务
+  final Task? initialTask;
 
   @override
   State<TaskForm> createState() => _TaskFormState();
@@ -188,7 +192,7 @@ class _TaskFormState extends State<TaskForm> {
   late TextEditingController _titleController;
   late DateTime? _selectedDueDate;
   late RepeatType _selectedRepeatType;
-  int? _selectedCategoryId; // 新增：选中的分类ID
+  int? _selectedCategoryId;
 
   @override
   void initState() {
@@ -198,9 +202,8 @@ class _TaskFormState extends State<TaskForm> {
     );
     _selectedDueDate = widget.initialTask?.date;
     _selectedRepeatType = widget.initialTask?.repeat ?? RepeatType.none;
-    _selectedCategoryId = widget.initialTask?.categoryId; // 初始化分类ID
+    _selectedCategoryId = widget.initialTask?.categoryId;
 
-    // 如果是编辑模式且设置了重复周期但没有设置截止日期，根据重复周期计算截止日期
     if (widget.initialTask != null &&
         _selectedRepeatType != RepeatType.none &&
         _selectedDueDate == null) {
@@ -216,7 +219,6 @@ class _TaskFormState extends State<TaskForm> {
 
   void _updateDueDateBasedOnRepeat() {
     if (_selectedRepeatType != RepeatType.none) {
-      // 当选择了重复周期时，自动设置截止日期为当前日期加上相应的周期
       setState(() {
         _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
       });
@@ -289,7 +291,7 @@ class _TaskFormState extends State<TaskForm> {
           ListTile(
             title: Text(
               _selectedDueDate != null
-                  ? '已选择: ${_selectedDueDate!.year}-${_selectedDueDate!.month.toString().padLeft(2, '0')}-${_selectedDueDate!.day.toString().padLeft(2, '0')}'
+                  ? '已选择：${_selectedDueDate!.year}-${_selectedDueDate!.month.toString().padLeft(2, '0')}-${_selectedDueDate!.day.toString().padLeft(2, '0')}'
                   : '选择截止日期',
             ),
             onTap: () async {
@@ -306,45 +308,55 @@ class _TaskFormState extends State<TaskForm> {
               }
             },
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (_titleController.text.isNotEmpty &&
-                  _selectedDueDate != null) {
-                if (widget.initialTask != null) {
-                  // 编辑现有任务
-                  final updatedTask = Task(
-                    id: widget.initialTask!.id,
-                    categoryId: _selectedCategoryId, // 添加分类ID
-                    isImportant: widget.initialTask!.isImportant,
-                    title: _titleController.text,
-                    isCompleted: widget.initialTask!.isCompleted,
-                    date: _selectedDueDate!,
-                    repeat: _selectedRepeatType,
-                  );
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (_titleController.text.isNotEmpty &&
+                      _selectedDueDate != null) {
+                    if (widget.initialTask != null) {
+                      final updatedTask = Task(
+                        id: widget.initialTask!.id,
+                        categoryId: _selectedCategoryId,
+                        isImportant: widget.initialTask!.isImportant,
+                        title: _titleController.text,
+                        isCompleted: widget.initialTask!.isCompleted,
+                        date: _selectedDueDate!,
+                        repeat: _selectedRepeatType,
+                      );
 
-                  await widget.todoProvider.updateTask(updatedTask);
-                } else {
-                  // 添加新任务
-                  final newTask = Task(
-                    categoryId: _selectedCategoryId, // 添加分类ID
-                    isImportant: false,
-                    title: _titleController.text,
-                    isCompleted: false,
-                    date: _selectedDueDate!,
-                    repeat: _selectedRepeatType,
-                  );
+                      await widget.todoProvider.updateTask(updatedTask);
+                    } else {
+                      final newTask = Task(
+                        categoryId: _selectedCategoryId,
+                        isImportant: false,
+                        title: _titleController.text,
+                        isCompleted: false,
+                        date: _selectedDueDate!,
+                        repeat: _selectedRepeatType,
+                      );
 
-                  await widget.todoProvider.addTask(newTask);
-                }
+                      await widget.todoProvider.addTask(newTask);
+                    }
 
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    Navigator.pop(context); // 关闭模态窗口
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    });
                   }
-                });
-              }
-            },
-            child: Text(widget.initialTask != null ? '更新任务' : '添加任务'),
+                },
+                child: Text(widget.initialTask != null ? '更新任务' : '添加任务'),
+              ),
+            ],
           ),
         ],
       ),
