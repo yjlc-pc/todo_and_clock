@@ -157,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           floatingActionButton:
               _selectedIndex ==
-                  1 // 只在待办事项页面显示浮动按钮
+                  0 // 只在待办事项页面显示浮动按钮
               ? FloatingActionButton.extended(
                   onPressed: () {
                     // 使用 Provider 来添加任务

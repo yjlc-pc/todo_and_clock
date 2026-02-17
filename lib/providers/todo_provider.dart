@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../models/task.dart';
-import '../models/category.dart' as MyCategory;
+import '../models/category.dart' as my_category;
 import '../utils/database_helper.dart';
 
 class TodoProvider with ChangeNotifier {
   List<Task> _tasks = [];
-  List<MyCategory.Category> _categories = [];
+  List<my_category.Category> _categories = [];
 
   List<Task> get tasks => _tasks;
-  List<MyCategory.Category> get categories => _categories;
+  List<my_category.Category> get categories => _categories;
 
   Future<void> loadTasks() async {
     final dbHelper = DatabaseHelper.instance;
@@ -23,9 +23,15 @@ class TodoProvider with ChangeNotifier {
 
     // 如果还没有分类，则添加默认分类
     if (categories.isEmpty) {
-      await dbHelper.createCategory(MyCategory.Category(name: "语文", icon: "book"));
-      await dbHelper.createCategory(MyCategory.Category(name: "数学", icon: "calculate"));
-      await dbHelper.createCategory(MyCategory.Category(name: "英语", icon: "language"));
+      await dbHelper.createCategory(
+        my_category.Category(name: "语文", icon: "book"),
+      );
+      await dbHelper.createCategory(
+        my_category.Category(name: "数学", icon: "calculate"),
+      );
+      await dbHelper.createCategory(
+        my_category.Category(name: "英语", icon: "language"),
+      );
       await loadCategories(); // 重新加载分类
     }
   }
@@ -55,13 +61,13 @@ class TodoProvider with ChangeNotifier {
     await loadTasks(); // 重新加载任务列表
   }
 
-  Future<void> addCategory(MyCategory.Category category) async {
+  Future<void> addCategory(my_category.Category category) async {
     final dbHelper = DatabaseHelper.instance;
     await dbHelper.createCategory(category);
     await loadCategories(); // 重新加载分类列表
   }
 
-  Future<void> updateCategory(MyCategory.Category category) async {
+  Future<void> updateCategory(my_category.Category category) async {
     final dbHelper = DatabaseHelper.instance;
     await dbHelper.updateCategory(category);
     await loadCategories(); // 重新加载分类列表
