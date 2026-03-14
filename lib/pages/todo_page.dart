@@ -164,7 +164,9 @@ class _TodoListState extends State<TodoList> {
       width: 300,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -173,7 +175,9 @@ class _TodoListState extends State<TodoList> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(6),
             ),
           ),
@@ -186,7 +190,9 @@ class _TodoListState extends State<TodoList> {
                   height: 16,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -195,7 +201,9 @@ class _TodoListState extends State<TodoList> {
                   height: 12,
                   width: 120,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -206,7 +214,9 @@ class _TodoListState extends State<TodoList> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(24),
             ),
           ),
@@ -311,7 +321,9 @@ class _TodoListState extends State<TodoList> {
                             child: SingleChildScrollView(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
-                                children: todoProvider.categories.map((category) {
+                                children: todoProvider.categories.map((
+                                  category,
+                                ) {
                                   return ListTile(
                                     leading: Icon(_getIconData(category.icon)),
                                     title: Text(category.name),

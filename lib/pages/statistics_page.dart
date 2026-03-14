@@ -207,7 +207,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             child: Wrap(
               spacing: 16.0, // 主轴(水平)方向间距
               runSpacing: 12.0, // 纵轴（垂直）方向间距
-              alignment: WrapAlignment.start,
+              alignment: WrapAlignment.center,
               children: <Widget>[
                 TodayFocusTimeCard(focusTime: todayFocusTime),
 

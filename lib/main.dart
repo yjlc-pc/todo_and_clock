@@ -9,6 +9,7 @@ import 'package:todo_list_and_clock/providers/todo_provider.dart';
 import 'package:todo_list_and_clock/providers/focus_provider.dart';
 import 'package:todo_list_and_clock/providers/music_provider.dart';
 import 'package:todo_list_and_clock/widgets/task_card.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,22 +56,35 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '待办事项与计时器',
-      themeMode: _themeMode,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light, // 明确指定浅色主题
-        colorSchemeSeed: Colors.lightBlue,
-        fontFamily: 'NotoSansSC', // Set Chinese font
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark, // 明确指定深色主题
-        colorSchemeSeed: Colors.blue,
-        fontFamily: 'NotoSansSC', // Set Chinese font
-      ),
-      home: MyHomePage(toggleTheme: toggleTheme),
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        final lightColorScheme =
+            lightDynamic ??
+            ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.light,
+            );
+        final darkColorScheme =
+            darkDynamic ??
+            ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            );
+        return MaterialApp(
+          theme: ThemeData(
+            colorScheme: lightColorScheme,
+            useMaterial3: true,
+            fontFamily: "NotoSansSC",
+          ),
+          darkTheme: ThemeData(
+            colorScheme: darkColorScheme,
+            useMaterial3: true,
+            fontFamily: "NotoSansSC",
+          ),
+          themeMode: _themeMode,
+          home: MyHomePage(toggleTheme: toggleTheme),
+        );
+      },
     );
   }
 }
@@ -171,10 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// 构建移动端布局（使用 BottomNavigationBar）
   Widget _buildMobileLayout(Widget selectedPage) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: selectedPage,
-    );
+    return Padding(padding: const EdgeInsets.all(8.0), child: selectedPage);
   }
 
   /// 构建桌面端布局（使用 NavigationRail）

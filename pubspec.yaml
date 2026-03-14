@@ -1,7 +1,7 @@
 name: todo_list_and_clock
-description: "A new Flutter project."
+description: "Todo List & Clock - 待办清单与专注计时器"
 publish_to: 'none'
-version: 0.1.0
+version: 0.2.0
 
 environment:
   sdk: ^3.9.2
@@ -15,14 +15,21 @@ dependencies:
   sqflite_common_ffi: ^2.3.7+1
   provider: ^6.1.2
   fl_chart: ^0.68.0
+  audioplayers: ^6.6.0
+  dynamic_color: ^1.7.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/music/songs.json
+    - assets/music/
+    - assets/images/
 
   fonts:
     - family: NotoSansSC

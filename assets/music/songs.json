@@ -1,0 +1,20 @@
+[
+  {
+    "title": "瞬间的永恒",
+    "artist": "预置音乐",
+    "url": "assets/music/瞬间的永恒.mp3",
+    "image": "assets/images/瞬间的永恒.png"
+  },
+  {
+    "title": "萤火之森",
+    "artist": "预置音乐",
+    "url": "assets/music/萤火之森.mp3",
+    "image": "assets/images/萤火之森.png"
+  },
+  {
+    "title": "Canon In D",
+    "artist": "预置音乐",
+    "url": "assets/music/Canon_In_D.mp3",
+    "image": "assets/images/Canon_In_D.png"
+  }
+]
