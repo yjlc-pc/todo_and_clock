@@ -1,7 +1,7 @@
 name: todo_list_and_clock
-description: "Todo List & Clock - 待办清单与专注计时器"
+description: "Todo List & Clock - 待办清单与专注计时器 (MVVM)"
 publish_to: 'none'
-version: 0.2.0
+version: 0.3.0-mvvm
 
 environment:
   sdk: ^3.9.2

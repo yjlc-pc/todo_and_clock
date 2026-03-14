@@ -1,37 +1,35 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:todo_list_and_clock/pages/todo_page.dart';
-import 'package:todo_list_and_clock/pages/statistics_page.dart';
-import 'package:todo_list_and_clock/utils/task_database_factory.dart';
-import 'package:todo_list_and_clock/utils/screen_display.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_list_and_clock/providers/todo_provider.dart';
-import 'package:todo_list_and_clock/providers/focus_provider.dart';
-import 'package:todo_list_and_clock/providers/music_provider.dart';
-import 'package:todo_list_and_clock/widgets/task_card.dart';
+import 'package:todo_list_and_clock/views/pages/todo_page.dart';
+import 'package:todo_list_and_clock/views/pages/statistics_page.dart';
+import 'package:todo_list_and_clock/services/database_service.dart';
+import 'package:todo_list_and_clock/utils/screen_display.dart';
+import 'package:todo_list_and_clock/view_models/task_view_model.dart';
+import 'package:todo_list_and_clock/view_models/focus_view_model.dart';
+import 'package:todo_list_and_clock/view_models/music_view_model.dart';
+import 'package:todo_list_and_clock/view_models/statistics_view_model.dart';
+import 'package:todo_list_and_clock/widgets/task_form.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化数据库工厂
+  // 初始化数据库服务
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    TaskDatabaseFactory.initialize();
+    await DatabaseService().database;
   }
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => TodoProvider()
-            ..loadTasks()
-            ..initializeDefaultCategories()
-            ..loadCategories(),
-        ),
-        ChangeNotifierProvider(create: (context) => FocusProvider()),
-        ChangeNotifierProvider(create: (context) => MusicProvider()),
+        // ViewModel 注册
+        ChangeNotifierProvider(create: (_) => TaskViewModel()..initialize()),
+        ChangeNotifierProvider(create: (_) => FocusViewModel()),
+        ChangeNotifierProvider(create: (_) => MusicViewModel()..initialize()),
+        ChangeNotifierProvider(create: (_) => StatisticsViewModel()..initialize()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -44,7 +42,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system; // 默认跟随系统
+  ThemeMode _themeMode = ThemeMode.system;
 
   void toggleTheme() {
     setState(() {
@@ -71,6 +69,7 @@ class _MyAppState extends State<MyApp> {
               brightness: Brightness.dark,
             );
         return MaterialApp(
+          title: 'Todo List & Clock',
           theme: ThemeData(
             colorScheme: lightColorScheme,
             useMaterial3: true,
@@ -100,10 +99,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
-  NavigationRailLabelType labelType = NavigationRailLabelType.all;
-  bool showLeading = false;
-  // groupAlignment 控制 NavigationRail 的分组对齐方式，-1.0 表示顶部对齐
-  double groupAlignment = -1.0;
 
   @override
   Widget build(BuildContext context) {
@@ -111,136 +106,117 @@ class _MyHomePageState extends State<MyHomePage> {
         ? ThemeMode.dark
         : ThemeMode.light;
 
-    return Consumer<TodoProvider>(
-      builder: (context, todoProvider, child) {
-        Widget selectedPage;
-        if (_selectedIndex == 0) {
-          selectedPage = TodoPage();
-        } else {
-          selectedPage = StatisticsPage();
-        }
+    final isMobile = ScreenDisplay.isMobileLayout(context);
 
-        // 判断是否为移动端布局
-        final isMobile = ScreenDisplay.isMobileLayout(context);
-
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: isMobile
-              ? _buildMobileLayout(selectedPage)
-              : _buildDesktopLayout(
-                  selectedPage,
-                  todoProvider,
-                  currentThemeMode,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: isMobile
+          ? _buildMobileLayout()
+          : _buildDesktopLayout(currentThemeMode),
+      bottomNavigationBar: isMobile
+          ? BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.today),
+                  label: "任务",
                 ),
-          bottomNavigationBar: isMobile
-              ? BottomNavigationBar(
-                  currentIndex: _selectedIndex,
-                  onTap: (index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  },
-                  items: const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.today),
-                      label: "任务",
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.bar_chart),
-                      label: "统计",
-                    ),
-                  ],
-                )
-              : null,
-          floatingActionButton:
-              _selectedIndex ==
-                  0 // 只在待办事项页面显示浮动按钮
-              ? FloatingActionButton.extended(
-                  onPressed: () {
-                    // 使用 Provider 来添加任务
-                    todoProvider.loadTasks(); // 确保数据是最新的
-                    // 我们将在 TodoPage 内部处理添加任务的逻辑
-                    // 通过 Provider 触发添加任务对话框
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (BuildContext context) {
-                        return TaskForm(
-                          context: context,
-                          todoProvider: todoProvider,
-                          initialTask: null,
-                        );
-                      },
-                    );
-                  },
-                  label: const Text("添加任务"),
-                  icon: const Icon(Icons.add),
-                )
-              : null,
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        );
-      },
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart),
+                  label: "统计",
+                ),
+              ],
+            )
+          : null,
+      floatingActionButton: _selectedIndex == 0
+          ? const FabAdd()
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  /// 构建移动端布局（使用 BottomNavigationBar）
-  Widget _buildMobileLayout(Widget selectedPage) {
-    return Padding(padding: const EdgeInsets.all(8.0), child: selectedPage);
+  /// 构建移动端布局
+  Widget _buildMobileLayout() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: _selectedIndex == 0 ? const TodoPage() : const StatisticsPage(),
+    );
   }
 
-  /// 构建桌面端布局（使用 NavigationRail）
-  Widget _buildDesktopLayout(
-    Widget selectedPage,
-    TodoProvider todoProvider,
-    ThemeMode currentThemeMode,
-  ) {
+  /// 构建桌面端布局
+  Widget _buildDesktopLayout(ThemeMode currentThemeMode) {
     return SafeArea(
       child: Row(
         children: <Widget>[
-          Consumer<TodoProvider>(
-            builder: (context, todoProvider, child) {
-              return NavigationRail(
-                destinations: [
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.today),
-                    label: Text("任务"),
-                  ),
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.bar_chart),
-                    label: Text("统计"),
-                  ),
-                ],
-                selectedIndex: _selectedIndex,
-                groupAlignment: groupAlignment,
-                onDestinationSelected: (int index) {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
-                },
-                labelType: labelType,
-                trailing: IconButton(
-                  tooltip: '切换深色模式',
-                  icon: Icon(
-                    currentThemeMode == ThemeMode.dark
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                  ),
-                  onPressed: widget.toggleTheme,
-                ),
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerLow,
-              );
+          NavigationRail(
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.today),
+                label: Text("任务"),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.bar_chart),
+                label: Text("统计"),
+              ),
+            ],
+            selectedIndex: _selectedIndex,
+            groupAlignment: -1.0,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
             },
+            labelType: NavigationRailLabelType.all,
+            trailing: IconButton(
+              tooltip: '切换深色模式',
+              icon: Icon(
+                currentThemeMode == ThemeMode.dark
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: widget.toggleTheme,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: selectedPage,
+              child: _selectedIndex == 0
+                  ? const TodoPage()
+                  : const StatisticsPage(),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 添加任务按钮（用于主页面）
+class FabAdd extends StatelessWidget {
+  const FabAdd({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        final viewModel = context.read<TaskViewModel>();
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => TaskForm(
+            viewModel: viewModel,
+            initialTask: null,
+          ),
+        );
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("添加任务"),
     );
   }
 }

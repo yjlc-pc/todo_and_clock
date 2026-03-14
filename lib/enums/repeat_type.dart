@@ -1,64 +1,58 @@
-/// 重复周期类型枚举
+/// 重复类型枚举
 enum RepeatType {
-  none('无', ''),
-  daily('每天', 'daily'),
-  weekly('每周', 'weekly'),
-  monthly('每月', 'monthly'),
-  yearly('每年', 'yearly');
+  none,      // 不重复
+  daily,     // 每天
+  weekly,    // 每周
+  monthly,   // 每月
+  custom,    // 自定义
+}
 
-  const RepeatType(this.displayName, this.value);
-
-  final String displayName;
-  final String value;
-
-  /// 根据字符串值获取对应的枚举
-  static RepeatType fromValue(String value) {
-    return RepeatType.values.firstWhere(
-      (type) => type.value.toLowerCase() == value.toLowerCase(),
-      orElse: () => RepeatType.none,
-    );
+/// 重复类型扩展
+extension RepeatTypeExtension on RepeatType {
+  String get displayName {
+    switch (this) {
+      case RepeatType.none:
+        return '不重复';
+      case RepeatType.daily:
+        return '每天';
+      case RepeatType.weekly:
+        return '每周';
+      case RepeatType.monthly:
+        return '每月';
+      case RepeatType.custom:
+        return '自定义';
+    }
   }
 
-  /// 获取下一个日期（根据重复周期）
-  DateTime getNextDate(DateTime startDate) {
+  static RepeatType fromInt(int value) {
+    switch (value) {
+      case 0:
+        return RepeatType.none;
+      case 1:
+        return RepeatType.daily;
+      case 2:
+        return RepeatType.weekly;
+      case 3:
+        return RepeatType.monthly;
+      case 4:
+        return RepeatType.custom;
+      default:
+        return RepeatType.none;
+    }
+  }
+
+  int toInt() {
     switch (this) {
-      case RepeatType.daily:
-        return startDate.add(const Duration(days: 1));
-      case RepeatType.weekly:
-        return startDate.add(const Duration(days: 7));
-      case RepeatType.monthly:
-        // 处理月份边界情况
-        int nextMonth = startDate.month + 1;
-        int nextYear = startDate.year;
-
-        if (nextMonth > 12) {
-          nextMonth = 1;
-          nextYear += 1;
-        }
-
-        // 确保日期有效（例如：1月31日 + 1个月 = 2月28/29日）
-        int day = startDate.day;
-        int daysInNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
-        if (day > daysInNextMonth) {
-          day = daysInNextMonth;
-        }
-
-        return DateTime(nextYear, nextMonth, day);
-      case RepeatType.yearly:
-        // 处理闰年情况
-        int nextYear = startDate.year + 1;
-        int month = startDate.month;
-        int day = startDate.day;
-
-        // 检查下一年的同月同日是否存在（如2月29日的情况）
-        try {
-          return DateTime(nextYear, month, day);
-        } catch (e) {
-          // 如果日期无效（如2月29日），则改为2月28日
-          return DateTime(nextYear, 2, 28);
-        }
       case RepeatType.none:
-        return startDate;
+        return 0;
+      case RepeatType.daily:
+        return 1;
+      case RepeatType.weekly:
+        return 2;
+      case RepeatType.monthly:
+        return 3;
+      case RepeatType.custom:
+        return 4;
     }
   }
 }

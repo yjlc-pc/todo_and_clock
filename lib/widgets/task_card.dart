@@ -1,362 +1,220 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_list_and_clock/providers/todo_provider.dart';
-import 'package:todo_list_and_clock/utils/screen_display.dart';
-import 'package:todo_list_and_clock/models/task.dart';
-import 'package:todo_list_and_clock/widgets/pomodoro_timer_picker.dart';
-import 'package:todo_list_and_clock/pages/foucs_page.dart';
-import 'package:todo_list_and_clock/enums/repeat_type.dart';
+import '../../view_models/task_view_model.dart';
+import '../../models/task.dart';
+import '../../models/category.dart';
+import 'pomodoro_timer_picker.dart';
+import '../../views/pages/focus_page.dart';
+import 'task_form.dart';
 
-class TaskCard extends StatefulWidget {
+/// 任务卡片组件
+class TaskCard extends StatelessWidget {
   const TaskCard({super.key, required this.task});
+
   final Task task;
 
   @override
-  State<TaskCard> createState() => _TaskCardState();
-}
-
-class _TaskCardState extends State<TaskCard> {
-  Future<void> _startPomodoroSession(BuildContext context) async {
-    final selectedMinutes = await showDialog<int>(
-      context: context,
-      builder: (BuildContext context) {
-        return PomodoroTimerPicker();
-      },
-    );
-
-    if (selectedMinutes != null && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => FocusPage(
-                task: widget.task,
-                durationInMinutes: selectedMinutes,
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: ListTile(
+        leading: Checkbox(
+          value: task.isCompleted,
+          onChanged: (value) {
+            final viewModel = context.read<TaskViewModel>();
+            viewModel.toggleTaskCompletion(task);
+          },
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+            color: task.isCompleted
+                ? Theme.of(context).colorScheme.outline
+                : null,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (task.description != null && task.description!.isNotEmpty)
+              Text(
+                task.description!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (task.categoryId != null)
+                  _buildCategoryChip(context, task.categoryId!),
+                if (task.dueDate != null)
+                  _buildDueDateChip(context, task.dueDate!),
+              ],
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) => _handleMenuAction(context, value),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'start_focus',
+              child: ListTile(
+                leading: Icon(Icons.play_arrow),
+                title: Text('开始专注'),
               ),
             ),
-          );
-        }
-      });
+            const PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('编辑'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete, color: Colors.red),
+                title: Text('删除', style: TextStyle(color: Colors.red)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建分类芯片
+  Widget _buildCategoryChip(BuildContext context, int categoryId) {
+    final viewModel = context.read<TaskViewModel>();
+    final category = viewModel.categories.firstWhere(
+      (c) => c.id == categoryId,
+      orElse: () => Category(name: '', color: Colors.grey.shade400.toARGB32()),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      decoration: BoxDecoration(
+        color: category.colorValue.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(category.iconData, size: 14, color: category.colorValue),
+          const SizedBox(width: 4),
+          Text(
+            category.name,
+            style: TextStyle(
+              fontSize: 12,
+              color: category.colorValue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建截止日期芯片
+  Widget _buildDueDateChip(BuildContext context, DateTime dueDate) {
+    final isOverdue = dueDate.isBefore(DateTime.now());
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      decoration: BoxDecoration(
+        color: isOverdue
+            ? Colors.red.withValues(alpha: 0.2)
+            : Colors.blue.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.schedule,
+            size: 14,
+            color: isOverdue ? Colors.red : Colors.blue,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${dueDate.month}/${dueDate.day}',
+            style: TextStyle(
+              fontSize: 12,
+              color: isOverdue ? Colors.red : Colors.blue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 处理菜单操作
+  void _handleMenuAction(BuildContext context, String value) {
+    final viewModel = context.read<TaskViewModel>();
+
+    switch (value) {
+      case 'start_focus':
+        _startFocus(context);
+        break;
+      case 'edit':
+        _showEditDialog(context, viewModel);
+        break;
+      case 'delete':
+        _confirmDelete(context, viewModel);
+        break;
     }
   }
 
-  void _showEditDialog(BuildContext context, TodoProvider todoProvider) {
+  /// 开始专注
+  Future<void> _startFocus(BuildContext context) async {
+    final duration = await showModalBottomSheet<int>(
+      context: context,
+      builder: (context) => const PomodoroTimerPicker(),
+    );
+
+    if (duration != null) {
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => FocusPage(
+              task: task,
+              durationInMinutes: duration,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// 显示编辑对话框
+  void _showEditDialog(BuildContext context, TaskViewModel viewModel) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        return TaskForm(
-          context: context,
-          todoProvider: todoProvider,
-          initialTask: widget.task,
-        );
-      },
+      builder: (context) => TaskForm(
+        viewModel: viewModel,
+        initialTask: task,
+      ),
     );
   }
 
-  void _confirmDeleteTask(BuildContext context, TodoProvider todoProvider) {
+  /// 确认删除
+  void _confirmDelete(BuildContext context, TaskViewModel viewModel) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('确认删除'),
-          content: const Text('确定要删除这个任务吗？'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () {
-                todoProvider.deleteTask(widget.task.id!);
-                Navigator.of(context).pop();
-              },
-              child: const Text('删除'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<TodoProvider>(
-      builder: (context, todoProvider, child) {
-        return ListTile(
-          leading: Checkbox(
-            value: widget.task.isCompleted,
-            onChanged: (bool? complete) {
-              if (complete == null) return;
-              final updatedTask = Task(
-                id: widget.task.id,
-                isImportant: widget.task.isImportant,
-                title: widget.task.title,
-                isCompleted: complete,
-                date: widget.task.date,
-                repeat: widget.task.repeat,
-              );
-              todoProvider.updateTask(updatedTask);
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定要删除任务"${task.title}"吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              viewModel.deleteTask(task.id!);
+              Navigator.of(context).pop();
             },
-          ),
-          title: Text(
-            widget.task.title,
-            style: ScreenDisplay.getTextTheme(
-              GeneralTextStyle.body,
-              context,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            '${widget.task.date.year}-${widget.task.date.month.toString().padLeft(2, '0')}-${widget.task.date.day.toString().padLeft(2, '0')} - 重复周期：${widget.task.repeat.displayName}',
-            style: ScreenDisplay.getTextTheme(
-              GeneralTextStyle.label,
-              context,
-            ).copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: () {
-                  _startPomodoroSession(context);
-                },
-                icon: const Icon(Icons.alarm),
-                tooltip: '开始专注',
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                tooltip: '更多操作',
-                onSelected: (String value) {
-                  if (value == 'edit') {
-                    _showEditDialog(context, todoProvider);
-                  } else if (value == 'delete') {
-                    _confirmDeleteTask(context, todoProvider);
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return [
-                    const PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 20),
-                          SizedBox(width: 8),
-                          Text('编辑'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 20),
-                          SizedBox(width: 8),
-                          Text('删除'),
-                        ],
-                      ),
-                    ),
-                  ];
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class TaskForm extends StatefulWidget {
-  const TaskForm({
-    super.key,
-    required this.context,
-    required this.todoProvider,
-    this.initialTask,
-  });
-
-  final BuildContext context;
-  final TodoProvider todoProvider;
-  final Task? initialTask;
-
-  @override
-  State<TaskForm> createState() => _TaskFormState();
-}
-
-class _TaskFormState extends State<TaskForm> {
-  late TextEditingController _titleController;
-  late DateTime? _selectedDueDate;
-  late RepeatType _selectedRepeatType;
-  int? _selectedCategoryId;
-
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController(
-      text: widget.initialTask?.title ?? '',
-    );
-    _selectedDueDate = widget.initialTask?.date;
-    _selectedRepeatType = widget.initialTask?.repeat ?? RepeatType.none;
-    _selectedCategoryId = widget.initialTask?.categoryId;
-
-    if (widget.initialTask != null &&
-        _selectedRepeatType != RepeatType.none &&
-        _selectedDueDate == null) {
-      _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    super.dispose();
-  }
-
-  void _updateDueDateBasedOnRepeat() {
-    if (_selectedRepeatType != RepeatType.none) {
-      setState(() {
-        _selectedDueDate = _selectedRepeatType.getNextDate(DateTime.now());
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: '任务标题'),
-            autofocus: true,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: DropdownButtonFormField<RepeatType>(
-              initialValue: _selectedRepeatType,
-              decoration: const InputDecoration(labelText: '重复周期'),
-              items: RepeatType.values.map((RepeatType repeatType) {
-                return DropdownMenuItem<RepeatType>(
-                  value: repeatType,
-                  child: Text(repeatType.displayName),
-                );
-              }).toList(),
-              onChanged: (RepeatType? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedRepeatType = newValue;
-                    _updateDueDateBasedOnRepeat();
-                  });
-                }
-              },
-            ),
-          ),
-          Consumer<TodoProvider>(
-            builder: (context, todoProvider, child) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: DropdownButtonFormField<int?>(
-                  initialValue: _selectedCategoryId,
-                  decoration: const InputDecoration(labelText: '分类'),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('无分类')),
-                    ...todoProvider.categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category.id,
-                        child: Text(category.name),
-                      );
-                    }),
-                  ],
-                  onChanged: (int? newValue) {
-                    setState(() {
-                      _selectedCategoryId = newValue;
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-          ListTile(
-            title: Text(
-              _selectedDueDate != null
-                  ? '已选择：${_selectedDueDate!.year}-${_selectedDueDate!.month.toString().padLeft(2, '0')}-${_selectedDueDate!.day.toString().padLeft(2, '0')}'
-                  : '选择截止日期',
-            ),
-            onTap: () async {
-              final DateTime? date = await showDatePicker(
-                context: context,
-                initialDate: _selectedDueDate ?? DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
-              );
-              if (date != null) {
-                setState(() {
-                  _selectedDueDate = DateTime(date.year, date.month, date.day);
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  if (_titleController.text.isNotEmpty &&
-                      _selectedDueDate != null) {
-                    if (widget.initialTask != null) {
-                      final updatedTask = Task(
-                        id: widget.initialTask!.id,
-                        categoryId: _selectedCategoryId,
-                        isImportant: widget.initialTask!.isImportant,
-                        title: _titleController.text,
-                        isCompleted: widget.initialTask!.isCompleted,
-                        date: _selectedDueDate!,
-                        repeat: _selectedRepeatType,
-                      );
-
-                      await widget.todoProvider.updateTask(updatedTask);
-                    } else {
-                      final newTask = Task(
-                        categoryId: _selectedCategoryId,
-                        isImportant: false,
-                        title: _titleController.text,
-                        isCompleted: false,
-                        date: _selectedDueDate!,
-                        repeat: _selectedRepeatType,
-                      );
-
-                      await widget.todoProvider.addTask(newTask);
-                    }
-
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        Navigator.pop(context);
-                      }
-                    });
-                  }
-                },
-                child: Text(widget.initialTask != null ? '更新任务' : '添加任务'),
-              ),
-            ],
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
