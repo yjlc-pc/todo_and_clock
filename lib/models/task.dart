@@ -1,105 +1,71 @@
-/// 任务模型 - 纯数据类
-class Task {
-  int? id;
-  final String title;
-  final String? description;
-  final bool isCompleted;
-  final int? categoryId;
-  final DateTime? dueDate;
-  final int priority;
-  final int repeatType;
-  final int? repeatInterval;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
+import '../enums/repeat_type.dart';
 
+class Task {
   Task({
     this.id,
+    this.categoryId, // 新增分类ID
+    required this.isImportant,
     required this.title,
-    this.description,
-    this.isCompleted = false,
-    this.categoryId,
-    this.dueDate,
-    this.priority = 0,
-    this.repeatType = 0,
-    this.repeatInterval,
-    required this.createdAt,
-    this.updatedAt,
+    required this.isCompleted,
+    required this.date,
+    this.repeat = RepeatType.none,
   });
 
-  /// 从 Map 创建任务
-  factory Task.fromMap(Map<String, dynamic> map) {
-    return Task(
-      id: map['id'] as int?,
-      title: map['title'] as String,
-      description: map['description'] as String?,
-      isCompleted: (map['isCompleted'] as int?) == 1,
-      categoryId: map['categoryId'] as int?,
-      dueDate: map['dueDate'] != null ? DateTime.parse(map['dueDate'] as String) : null,
-      priority: map['priority'] as int? ?? 0,
-      repeatType: map['repeatType'] as int? ?? 0,
-      repeatInterval: map['repeatInterval'] as int?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt'] as String) : null,
-    );
+  int? id;
+  int? categoryId; // 新增分类ID
+  bool isImportant;
+  String title;
+  bool isCompleted;
+  DateTime date;
+  RepeatType repeat;
+
+  void toggleCompleted() {
+    isCompleted = !isCompleted;
   }
 
-  /// 转换为 Map
-  Map<String, dynamic> toMap() {
+  // 序列化为 JSON
+  Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
+      'isImportant': isImportant,
       'title': title,
-      'description': description,
-      'isCompleted': isCompleted ? 1 : 0,
-      'categoryId': categoryId,
-      'dueDate': dueDate?.toIso8601String(),
-      'priority': priority,
-      'repeatType': repeatType,
-      'repeatInterval': repeatInterval,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'isCompleted': isCompleted,
+      'time': date.toIso8601String(),
+      'repeat': repeat.value,
     };
   }
 
-  /// 复制并修改任务
-  Task copyWith({
-    int? id,
-    String? title,
-    String? description,
-    bool? isCompleted,
-    int? categoryId,
-    DateTime? dueDate,
-    int? priority,
-    int? repeatType,
-    int? repeatInterval,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
+  // 从 JSON 反序列化
+  factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      isCompleted: isCompleted ?? this.isCompleted,
-      categoryId: categoryId ?? this.categoryId,
-      dueDate: dueDate ?? this.dueDate,
-      priority: priority ?? this.priority,
-      repeatType: repeatType ?? this.repeatType,
-      repeatInterval: repeatInterval ?? this.repeatInterval,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      isImportant: json['isImportant'] as bool,
+      title: json['title'] as String,
+      isCompleted: json['isCompleted'] as bool,
+      date: DateTime.parse(json['time'] as String),
+      repeat: RepeatType.fromValue(json['repeat'] as String),
     );
   }
 
-  /// 获取优先级文本
-  String get priorityText {
-    switch (priority) {
-      case 0:
-        return '低';
-      case 1:
-        return '中';
-      case 2:
-        return '高';
-      default:
-        return '中';
-    }
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'categoryId': categoryId, // 新增字段
+      'isImportant': isImportant ? 1 : 0,
+      'title': title,
+      'isCompleted': isCompleted ? 1 : 0,
+      'time': date.toIso8601String(),
+      'repeat': repeat.value,
+    };
+  }
+
+  factory Task.fromMap(Map<String, dynamic> map) {
+    return Task(
+      id: map['id'] as int?,
+      categoryId: map['categoryId'] as int?, // 新增字段
+      isImportant: map['isImportant'] == 1,
+      title: map['title'] as String,
+      isCompleted: map['isCompleted'] == 1,
+      date: DateTime.parse(map['time'] as String),
+      repeat: RepeatType.fromValue(map['repeat'] as String),
+    );
   }
 }

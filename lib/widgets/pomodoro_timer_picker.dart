@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 番茄钟时长选择器
 class PomodoroTimerPicker extends StatefulWidget {
   const PomodoroTimerPicker({super.key});
 
@@ -9,73 +8,71 @@ class PomodoroTimerPicker extends StatefulWidget {
 }
 
 class _PomodoroTimerPickerState extends State<PomodoroTimerPicker> {
-  int _selectedMinutes = 25;
+  int _selectedMinutes = 25; // 默认25分钟
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    return AlertDialog(
+      title: const Text('选择番茄钟时长'),
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '选择专注时长',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 24),
           Text(
             '$_selectedMinutes 分钟',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          const SizedBox(height: 16),
           Slider(
             value: _selectedMinutes.toDouble(),
             min: 5,
             max: 60,
-            divisions: 11,
-            label: '$_selectedMinutes 分钟',
-            onChanged: (value) {
+            divisions: 11, // (60-5)/5=11 divisions
+            label: '${_selectedMinutes.toInt()}分钟',
+            onChanged: (double value) {
+              int roundedValue = (value / 5).round() * 5; // 四舍五入到最近的5的倍数
+              roundedValue = roundedValue.clamp(5, 60); // 限制在5-60范围内
               setState(() {
-                _selectedMinutes = (value / 5).round() * 5;
-                _selectedMinutes = _selectedMinutes.clamp(5, 60);
+                _selectedMinutes = roundedValue;
               });
             },
           ),
           const SizedBox(height: 16),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [15, 25, 30, 45, 60].map((minutes) {
-              return ChoiceChip(
-                label: Text('$minutes 分钟'),
-                selected: _selectedMinutes == minutes,
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() {
-                      _selectedMinutes = minutes;
-                    });
-                  }
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            spacing: 8.0,
             children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(_selectedMinutes),
-                child: const Text('开始'),
-              ),
+              _buildQuickSelectButton(15),
+              _buildQuickSelectButton(30),
+              _buildQuickSelectButton(45),
+              _buildQuickSelectButton(60),
             ],
           ),
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // 取消
+          },
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop(_selectedMinutes); // 返回选择的时间
+          },
+          child: const Text('开始'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickSelectButton(int minutes) {
+    return ChoiceChip(
+      label: Text('$minutes分钟'),
+      selected: _selectedMinutes == minutes,
+      onSelected: (selected) {
+        setState(() {
+          _selectedMinutes = selected ? minutes : 25;
+        });
+      },
     );
   }
 }
