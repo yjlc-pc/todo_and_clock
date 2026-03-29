@@ -106,6 +106,81 @@ class DatabaseHelper {
     return await factory.deleteCategory(db, id);
   }
 
+  // 统计相关查询
+  /// 获取指定日期范围内的专注记录
+  Future<List<Pomodoro>> readPomodorosByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final db = await instance.database;
+    final query = '''
+      SELECT * FROM pomodoros 
+      WHERE isRest = 0 
+      AND startTime >= ? 
+      AND startTime <= ?
+      ORDER BY startTime ASC
+    ''';
+    final result = await db.rawQuery(
+      query,
+      [startDate.toIso8601String(), endDate.toIso8601String()],
+    );
+    return result.map((map) => Pomodoro.fromMap(map)).toList();
+  }
+
+  /// 获取按分类统计的专注时长
+  Future<Map<int, int>> getCategoryFocusDuration() async {
+    final db = await instance.database;
+    final query = '''
+      SELECT p.taskId, t.categoryId, SUM(p.duration) as totalDuration
+      FROM pomodoros p
+      LEFT JOIN tasks t ON p.taskId = t.id
+      WHERE p.isRest = 0
+      GROUP BY t.categoryId
+    ''';
+    final result = await db.rawQuery(query);
+    
+    Map<int, int> categoryMap = {};
+    for (var row in result) {
+      final categoryId = row['categoryId'] as int?;
+      final duration = row['totalDuration'] as int?;
+      if (categoryId != null && duration != null) {
+        categoryMap[categoryId] = (categoryMap[categoryId] ?? 0) + duration;
+      }
+    }
+    return categoryMap;
+  }
+
+  /// 获取按日期分组的专注时长（用于热力图等）
+  Future<Map<String, int>> getDailyFocusDuration({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final db = await instance.database;
+    final query = '''
+      SELECT DATE(startTime) as date, SUM(duration) as totalDuration
+      FROM pomodoros
+      WHERE isRest = 0
+      AND startTime >= ?
+      AND startTime <= ?
+      GROUP BY DATE(startTime)
+      ORDER BY date ASC
+    ''';
+    final result = await db.rawQuery(
+      query,
+      [startDate.toIso8601String(), endDate.toIso8601String()],
+    );
+    
+    Map<String, int> dailyMap = {};
+    for (var row in result) {
+      final date = row['date'] as String;
+      final duration = row['totalDuration'] as int?;
+      if (duration != null) {
+        dailyMap[date] = duration;
+      }
+    }
+    return dailyMap;
+  }
+
   Future close() async {
     if (_database != null) {
       await _database!.close();

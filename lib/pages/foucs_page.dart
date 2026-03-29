@@ -243,6 +243,13 @@ class _FocusPageState extends State<FocusPage> {
     ColorScheme colorScheme,
     MusicProvider musicProvider,
   ) {
+    final positionSeconds = musicProvider.position.inSeconds.toDouble();
+    final durationSeconds = musicProvider.duration.inSeconds.toDouble();
+    // 确保 value 在 min 和 max 之间
+    final clampedValue = durationSeconds > 0
+        ? positionSeconds.clamp(0.0, durationSeconds)
+        : 0.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
@@ -258,12 +265,14 @@ class _FocusPageState extends State<FocusPage> {
               overlayColor: colorScheme.primary.withValues(alpha: 0.2),
             ),
             child: Slider(
-              value: musicProvider.position.inSeconds.toDouble(),
+              value: clampedValue,
               min: 0.0,
-              max: musicProvider.duration.inSeconds.toDouble(),
+              max: durationSeconds,
               onChanged: (value) {
                 musicProvider.seekTo(Duration(seconds: value.toInt()));
               },
+              onChangeStart: (_) {},
+              onChangeEnd: (_) {},
             ),
           ),
           _buildTimeLabels(colorScheme, musicProvider),

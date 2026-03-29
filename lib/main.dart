@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:todo_list_and_clock/pages/todo_page.dart';
+import 'package:todo_list_and_clock/pages/streak_page.dart';
 import 'package:todo_list_and_clock/pages/statistics_page.dart';
 import 'package:todo_list_and_clock/utils/task_database_factory.dart';
 import 'package:todo_list_and_clock/utils/screen_display.dart';
@@ -9,6 +10,7 @@ import 'package:todo_list_and_clock/providers/todo_provider.dart';
 import 'package:todo_list_and_clock/providers/focus_provider.dart';
 import 'package:todo_list_and_clock/providers/music_provider.dart';
 import 'package:todo_list_and_clock/widgets/task_card.dart';
+import 'package:todo_list_and_clock/widgets/streak_card.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 void main() async {
@@ -102,7 +104,6 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   NavigationRailLabelType labelType = NavigationRailLabelType.all;
   bool showLeading = false;
-  // groupAlignment 控制 NavigationRail 的分组对齐方式，-1.0 表示顶部对齐
   double groupAlignment = -1.0;
 
   @override
@@ -125,6 +126,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
+          appBar: isMobile
+              ? AppBar(
+                  title: Text(_selectedIndex == 0 ? '任务' : '统计'),
+                  actions: [
+                    // 连续专注卡片 - 点击右上角可进入连续记录页面
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const StreakPage(),
+                              ),
+                            );
+                          },
+                          child: StreakCard(),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : null,
           body: isMobile
               ? _buildMobileLayout(selectedPage)
               : _buildDesktopLayout(
@@ -153,14 +177,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 )
               : null,
           floatingActionButton:
-              _selectedIndex ==
-                  0 // 只在待办事项页面显示浮动按钮
+              _selectedIndex == 0
               ? FloatingActionButton.extended(
                   onPressed: () {
-                    // 使用 Provider 来添加任务
-                    todoProvider.loadTasks(); // 确保数据是最新的
-                    // 我们将在 TodoPage 内部处理添加任务的逻辑
-                    // 通过 Provider 触发添加任务对话框
+                    todoProvider.loadTasks();
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -183,12 +203,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  /// 构建移动端布局（使用 BottomNavigationBar）
+  /// 构建移动端布局
   Widget _buildMobileLayout(Widget selectedPage) {
     return Padding(padding: const EdgeInsets.all(8.0), child: selectedPage);
   }
 
-  /// 构建桌面端布局（使用 NavigationRail）
+  /// 构建桌面端布局
   Widget _buildDesktopLayout(
     Widget selectedPage,
     TodoProvider todoProvider,
@@ -218,18 +238,37 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 },
                 labelType: labelType,
-                trailing: IconButton(
-                  tooltip: '切换深色模式',
-                  icon: Icon(
-                    currentThemeMode == ThemeMode.dark
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                  ),
-                  onPressed: widget.toggleTheme,
+                trailing: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 连续专注卡片 - 点击可进入连续记录页面
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const StreakPage(),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: const StreakCard(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // 切换深色模式按钮
+                    IconButton(
+                      tooltip: '切换深色模式',
+                      icon: Icon(
+                        currentThemeMode == ThemeMode.dark
+                            ? Icons.light_mode
+                            : Icons.dark_mode,
+                      ),
+                      onPressed: widget.toggleTheme,
+                    ),
+                  ],
                 ),
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerLow,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
               );
             },
           ),

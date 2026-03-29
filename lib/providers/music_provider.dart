@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import '../models/song.dart';
 
 /// 音乐播放器 Provider
@@ -24,19 +23,19 @@ class MusicProvider extends ChangeNotifier {
 
   /// 歌曲列表
   List<Song> get songs => _songs;
-  
+
   /// 当前歌曲
   Song get currentSong => _currentSong ?? _emptySong;
-  
+
   /// 是否正在播放
   bool get isPlaying => _isPlaying;
-  
+
   /// 当前播放位置
   Duration get position => _position;
-  
+
   /// 歌曲总时长
   Duration get duration => _duration;
-  
+
   /// 播放进度百分比 (0.0 - 1.0)
   double get progress => _duration.inMilliseconds > 0
       ? _position.inMilliseconds / _duration.inMilliseconds
@@ -160,8 +159,9 @@ class MusicProvider extends ChangeNotifier {
   Future<void> previousSong() async {
     if (_songs.isEmpty) return;
 
-    _currentSongIndex =
-        _currentSongIndex <= 0 ? _songs.length - 1 : _currentSongIndex - 1;
+    _currentSongIndex = _currentSongIndex <= 0
+        ? _songs.length - 1
+        : _currentSongIndex - 1;
     _updateCurrentSong();
     _resetPosition();
 

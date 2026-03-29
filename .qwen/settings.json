@@ -1,5 +1,6 @@
 {
   "tools": {
     "approvalMode": "plan"
-  }
+  },
+  "$version": 3
 }

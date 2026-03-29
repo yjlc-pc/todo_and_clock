@@ -1,29 +1,75 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import '../utils/statistics_helper.dart';
 
-// 今日专注时间卡片
+// ==================== 基础统计卡片 ====================
+
+/// 今日专注时间卡片
 class TodayFocusTimeCard extends StatelessWidget {
-  final String focusTime;
+  final double focusMinutes;
 
-  const TodayFocusTimeCard({super.key, required this.focusTime});
+  const TodayFocusTimeCard({super.key, required this.focusMinutes});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // 根据专注时长选择颜色和图标
+    IconData icon;
+    Color cardColor;
+    String message;
+    
+    if (focusMinutes == 0) {
+      icon = Icons.play_circle_outline;
+      cardColor = colorScheme.surfaceContainer;
+      message = '今天还没开始专注哦';
+    } else if (focusMinutes < 60) {
+      icon = Icons.timer_outlined;
+      cardColor = colorScheme.primaryContainer;
+      message = '专注进行中，继续保持！';
+    } else if (focusMinutes < 120) {
+      icon = Icons.thumb_up_outlined;
+      cardColor = colorScheme.secondaryContainer;
+      message = '不错哦，已经专注一小时了！';
+    } else {
+      icon = Icons.emoji_events_outlined;
+      cardColor = colorScheme.tertiaryContainer;
+      message = '太厉害了，专注达人！';
+    }
+
     return Card(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      color: cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "今日共计专注时间",
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: colorScheme.onSecondaryContainer),
+                Text(
+                  '今日',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(focusTime, style: Theme.of(context).textTheme.displayLarge),
+            const SizedBox(height: 12),
+            Text(
+              StatisticsHelper.formatDuration(focusMinutes),
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
+                  ),
+            ),
           ],
         ),
       ),
@@ -31,289 +77,105 @@ class TodayFocusTimeCard extends StatelessWidget {
   }
 }
 
-// 本周专注情况图表卡片
-class WeeklyFocusChartCard extends StatelessWidget {
-  final List<double> weeklyFocusHours;
+/// 本周专注时间卡片
+class WeekFocusTimeCard extends StatelessWidget {
+  final double focusMinutes;
 
-  const WeeklyFocusChartCard({super.key, required this.weeklyFocusHours});
+  const WeekFocusTimeCard({super.key, required this.focusMinutes});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double totalWeeklyHours = weeklyFocusHours.reduce((a, b) => a + b);
+    final colorScheme = Theme.of(context).colorScheme;
 
-        // 判断屏幕是否窄于800像素
-        bool isNarrowScreen = constraints.maxWidth < 800;
-
-        if (isNarrowScreen) {
-          // 窄屏模式：将总时间和图表分为两个独立的Card
-          return Column(
-            children: [
-              // 总时间Card
-              Card(
-                color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "本周专注情况",
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                "总计",
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
-                              ),
-                              Text(
-                                "${totalWeeklyHours.toStringAsFixed(1)} 小时",
-                                style: Theme.of(context).textTheme.displayLarge,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 8),
-                          VerticalDivider(
-                            thickness: 4,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+    return Card(
+      color: colorScheme.surfaceContainerLowest,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  color: colorScheme.outline,
+                  size: 20,
                 ),
-              ),
-              const SizedBox(height: 16),
-              // 图表Card
-              Card(
-                color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "每日专注时长分布",
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                const SizedBox(width: 8),
+                Text(
+                  '本周专注',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 300,
-                        child: BarChart(
-                          BarChartData(
-                            alignment: BarChartAlignment.spaceAround,
-                            barTouchData: BarTouchData(enabled: false),
-                            titlesData: FlTitlesData(
-                              show: true,
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 28,
-                                  getTitlesWidget: (value, meta) {
-                                    switch (value.toInt()) {
-                                      case 0:
-                                        return const Text('周一');
-                                      case 1:
-                                        return const Text('周二');
-                                      case 2:
-                                        return const Text('周三');
-                                      case 3:
-                                        return const Text('周四');
-                                      case 4:
-                                        return const Text('周五');
-                                      case 5:
-                                        return const Text('周六');
-                                      case 6:
-                                        return const Text('周日');
-                                      default:
-                                        return const Text('');
-                                    }
-                                  },
-                                ),
-                              ),
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 40,
-                                ),
-                              ),
-                              topTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                            ),
-                            borderData: FlBorderData(show: false),
-                            gridData: FlGridData(show: true),
-                            groupsSpace: 12,
-                            barGroups: weeklyFocusHours.asMap().entries.map((
-                              entry,
-                            ) {
-                              int index = entry.key;
-                              double value = entry.value;
-                              return BarChartGroupData(
-                                x: index,
-                                barRods: [
-                                  BarChartRodData(
-                                    toY: value,
-                                    width: 16,
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(8.0),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-            ],
-          );
-        } else {
-          // 宽屏模式：保持原有布局
-          return Card(
-            color: Theme.of(context).colorScheme.surfaceContainerLowest,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "本周专注情况",
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Column(
-                        children: [
-                          Text(
-                            "总计",
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                          ),
-                          Text(
-                            "${totalWeeklyHours.toStringAsFixed(1)} 小时",
-                            style: Theme.of(context).textTheme.displayLarge,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 8),
-                      VerticalDivider(
-                        thickness: 4,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 200,
-                          padding: EdgeInsets.only(left: 8),
-                          child: BarChart(
-                            BarChartData(
-                              alignment: BarChartAlignment.spaceAround,
-                              barTouchData: BarTouchData(enabled: false),
-                              titlesData: FlTitlesData(
-                                show: true,
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 28,
-                                    getTitlesWidget: (value, meta) {
-                                      switch (value.toInt()) {
-                                        case 0:
-                                          return const Text('周一');
-                                        case 1:
-                                          return const Text('周二');
-                                        case 2:
-                                          return const Text('周三');
-                                        case 3:
-                                          return const Text('周四');
-                                        case 4:
-                                          return const Text('周五');
-                                        case 5:
-                                          return const Text('周六');
-                                        case 6:
-                                          return const Text('周日');
-                                        default:
-                                          return const Text('');
-                                      }
-                                    },
-                                  ),
-                                ),
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 40,
-                                  ),
-                                ),
-                                topTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                rightTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                              ),
-                              borderData: FlBorderData(show: false),
-                              gridData: FlGridData(show: true),
-                              groupsSpace: 12,
-                              barGroups: weeklyFocusHours.asMap().entries.map((
-                                entry,
-                              ) {
-                                int index = entry.key;
-                                double value = entry.value;
-                                return BarChartGroupData(
-                                  x: index,
-                                  barRods: [
-                                    BarChartRodData(
-                                      toY: value,
-                                      width: 16,
-                                      borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(8.0),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             ),
-          );
-        }
-      },
+            const SizedBox(height: 8),
+            Text(
+              StatisticsHelper.formatDuration(focusMinutes),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// 本周完成专注任务数卡片
+/// 本月专注时间卡片
+class MonthFocusTimeCard extends StatelessWidget {
+  final double focusMinutes;
+
+  const MonthFocusTimeCard({super.key, required this.focusMinutes});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      color: colorScheme.surfaceContainerLowest,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.date_range_outlined,
+                  color: colorScheme.outline,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '本月专注',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              StatisticsHelper.formatDuration(focusMinutes),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.secondary,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== 原有卡片（保持兼容） ====================
+
+/// 本周完成专注任务数卡片
 class WeeklyCompletedTasksCard extends StatelessWidget {
   final int completedTasks;
 
@@ -346,7 +208,7 @@ class WeeklyCompletedTasksCard extends StatelessWidget {
   }
 }
 
-// 最常专注时间段卡片
+/// 最常专注时间段卡片
 class MostFocusTimeCard extends StatelessWidget {
   final String mostFocusTime;
 
@@ -379,7 +241,7 @@ class MostFocusTimeCard extends StatelessWidget {
   }
 }
 
-// 随机鼓励信息卡片
+/// 随机鼓励信息卡片
 class RandomEncouragementCard extends StatelessWidget {
   final List<String> encouragementMessages;
 
@@ -413,15 +275,14 @@ class RandomEncouragementCard extends StatelessWidget {
   }
 }
 
-// 统计卡片集合组件
+// ==================== 统计卡片集合（旧版，保持兼容） ====================
+
 class StatisticsCards extends StatelessWidget {
   const StatisticsCards({super.key});
 
   @override
   Widget build(BuildContext context) {
     // 模拟数据 - 实际应用中应从数据库获取
-    String todayFocusTime = "2小时30分钟";
-    List<double> weeklyFocusHours = [1.5, 2.0, 0.5, 3.0, 2.5, 1.0, 2.0];
     int weeklyCompletedTasks = 12;
     String mostFocusTime = "上午 9:00 - 11:00";
     List<String> encouragementMessages = [
@@ -437,9 +298,7 @@ class StatisticsCards extends StatelessWidget {
 
     return Column(
       children: [
-        TodayFocusTimeCard(focusTime: todayFocusTime),
-        const SizedBox(height: 16),
-        WeeklyFocusChartCard(weeklyFocusHours: weeklyFocusHours),
+        TodayFocusTimeCard(focusMinutes: 150),
         const SizedBox(height: 16),
         WeeklyCompletedTasksCard(completedTasks: weeklyCompletedTasks),
         const SizedBox(height: 16),
@@ -448,17 +307,5 @@ class StatisticsCards extends StatelessWidget {
         RandomEncouragementCard(encouragementMessages: encouragementMessages),
       ],
     );
-  }
-}
-
-// 辅助函数：计算数组总和
-extension SumExtension on Iterable<double> {
-  double reduce(double Function(double value, double element) combine) {
-    if (isEmpty) return 0.0;
-    double result = elementAt(0);
-    for (int i = 1; i < length; i++) {
-      result = combine(result, elementAt(i));
-    }
-    return result;
   }
 }
