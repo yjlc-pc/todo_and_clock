@@ -1,118 +1,176 @@
-# Todo List and Clock App
+# Todo List & Clock - 待办清单与专注计时器
 
-## Project Overview
+[![Flutter](https://img.shields.io/badge/Flutter-3.9.2-blue.svg)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.9.2-blue.svg)](https://dart.dev)
+[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-This is a Flutter application that combines a todo list with a clock feature, built with modern Flutter practices. The app provides a clean and intuitive UI with cross-platform support for Android, iOS, Web, Linux, macOS, and Windows.
+一款功能齐全的 Flutter 待办事项管理与专注计时器应用，帮助您高效管理任务并保持专注。
 
-The application features:
-- Todo list functionality to manage tasks
-- Pomodoro timer functionality for focus sessions
-- Responsive UI that adapts to different screen sizes
-- Dark/light theme support
-- SQLite database integration for data persistence
-- Music player interface during focus sessions
+## ✨ 主要功能
 
-## Project Structure
+### 📝 待办事项管理
+- 创建、编辑和删除待办事项
+- 任务分类与标签管理
+- 任务优先级设置
+- 完成状态追踪
+- 数据持久化存储
+
+### ⏱️ 专注计时器
+- 番茄工作法支持
+- 自定义计时时长
+- 进度可视化展示
+- 提醒通知功能
+
+### 🎵 背景音乐
+- 内置精选音乐库
+- 专注时播放舒缓音乐
+- 音乐播放控制
+
+### 📊 统计分析
+- 任务完成统计
+- 专注时长记录
+- 数据图表展示
+- 历史趋势分析
+
+### 🎨 精美界面
+- Material Design 设计风格
+- 动态颜色主题支持
+- 中文字体优化
+- 响应式布局
+
+## 📦 技术栈
+
+- **框架**: Flutter 3.9.2
+- **语言**: Dart 3.9.2
+- **状态管理**: Provider
+- **本地存储**: 
+  - SharedPreferences (轻量级数据存储)
+  - SQLite (sqflite + sqflite_common_ffi)
+- **图表**: fl_chart
+- **音频**: audioplayers
+- **主题**: dynamic_color
+
+## 🏗️ 项目结构
 
 ```
 lib/
-├── main.dart          # Main entry point with navigation rail
-├── enums/             # Enum definitions
-├── models/            # Data models (Task, Pomodoro)
-├── pages/             # UI screens (TodoPage, FocusPage)
-├── providers/         # State management (TodoProvider)
-├── utils/             # Utility functions (DatabaseHelper, ScreenDisplay)
-└── widgets/           # Reusable UI components (TaskCard, PomodoroTimer)
+├── main.dart              # 应用入口
+├── enums/                 # 枚举定义
+├── models/                # 数据模型
+├── pages/                 # 页面组件
+├── providers/             # 状态管理
+├── utils/                 # 工具类
+├── widgets/               # 可复用组件
 ```
 
-## Building and Running
-
-### Prerequisites
-- Flutter SDK (latest stable version)
-- Dart SDK (bundled with Flutter)
-- Platform-specific development tools (Android Studio, Xcode, etc.)
-
-### Installation
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd todo_list_and_clock
+```
+assets/
+├── fonts/                 # 字体文件 (Noto Sans SC)
+├── images/                # 图片资源
+└── music/                 # 音乐文件及配置
+    └── songs.json         # 音乐列表配置
 ```
 
-2. Install dependencies:
-```bash
-flutter pub get
-```
+## 🚀 快速开始
 
-3. Run the application:
-```bash
-flutter run
-```
+### 环境要求
 
-### Build for Production
-To build for production, use the appropriate command for your target platform:
+- Flutter SDK >= 3.9.2
+- Dart SDK >= 3.9.2
+- Android Studio / VS Code
+- Android / iOS / Web / Desktop 开发环境（可选）
 
-```bash
-# Android APK
-flutter build apk --release
+### 安装步骤
 
-# iOS
-flutter build ios --release
+1. **克隆仓库**
+   ```bash
+   git clone <repository-url>
+   cd todo_list_and_clock
+   ```
 
-# Web
-flutter build web --release
+2. **安装依赖**
+   ```bash
+   flutter pub get
+   ```
 
-# Windows
-flutter build windows --release
+3. **运行应用**
+   ```bash
+   # 运行在 Chrome 浏览器
+   flutter run -d chrome
+   
+   # 运行在 Android 设备
+   flutter run -d android
+   
+   # 运行在 iOS 模拟器
+   flutter run -d ios
+   
+   # 运行在桌面平台
+   flutter run -d linux
+   flutter run -d macos
+   flutter run -d windows
+   ```
 
-# macOS
-flutter build macos --release
+4. **构建发布版本**
+   ```bash
+   # Android APK
+   flutter build apk --release
+   
+   # iOS IPA
+   flutter build ios --release
+   
+   # Web
+   flutter build web --release
+   ```
 
-# Linux
-flutter build linux --release
-```
+## 📱 支持平台
 
-## Key Features
+- ✅ Android
+- ✅ iOS
+- ✅ Web
+- ✅ Linux
+- ✅ macOS
+- ✅ Windows
 
-### Focus Page (foucs_page.dart)
-The application includes a responsive Focus Page that implements a Pomodoro timer with music player functionality:
-- **Responsive Layout**: Adapts between desktop (side-by-side layout) and mobile (vertical stacked layout) views
-- **Focus Timer**: Implements a Pomodoro technique with configurable focus and rest periods
-- **Music Player**: Includes play/pause, previous, and next controls during focus sessions
-- **Visual Elements**: Features song information card with simulated night sky imagery, progress indicators, and control buttons
-- **Data Persistence**: Saves completed and interrupted Pomodoro sessions to the database
+## 🔧 配置说明
 
-### State Management
-The application uses the Provider package for state management, with TodoProvider managing the list of tasks.
+### 字体配置
+应用使用 Noto Sans SC 中文字体，已包含在 `assets/fonts/` 目录中。
 
-### Theming
-The app supports both light and dark themes with Material Design 3 components and uses the Noto Sans SC font for Chinese character support.
+### 音乐资源
+音乐文件放置在 `assets/music/` 目录，并在 `songs.json` 中配置音乐列表。
 
-## Development Conventions
+## 📄 许可证
 
-- Uses Material Design 3 guidelines
-- Follows Flutter's recommended project structure
-- Implements responsive design principles
-- Uses Provider for state management
-- Includes proper database handling with sqflite
-- Implements proper resource disposal patterns
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## Dependencies
+## 🤝 贡献
 
-- flutter: SDK
-- path: ^1.9.1
-- shared_preferences: ^2.5.4
-- sqflite: ^2.4.2
-- sqflite_common_ffi: ^2.3.7+1 (for desktop platforms)
-- provider: ^6.1.2
+欢迎贡献代码！请遵循以下步骤：
 
-## Testing
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
-Unit and widget tests can be run using:
-```bash
-flutter test
-```
+## 📞 联系方式
 
-## Additional Notes
+如有问题或建议，请通过以下方式联系：
 
-The application has platform-specific initialization for desktop platforms in the main.dart file, initializing the TaskDatabaseFactory for Windows, Linux, and macOS.
+- 提交 Issue
+- 发送邮件至项目维护者
+
+## 🙏 致谢
+
+感谢以下开源项目：
+
+- [Flutter](https://flutter.dev)
+- [Provider](https://pub.dev/packages/provider)
+- [fl_chart](https://pub.dev/packages/fl_chart)
+- [audioplayers](https://pub.dev/packages/audioplayers)
+- [sqflite](https://pub.dev/packages/sqflite)
+
+---
+
+**Made with ❤️ using Flutter**
